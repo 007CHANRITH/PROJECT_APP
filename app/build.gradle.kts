@@ -34,6 +34,14 @@ android {
 }
 
 dependencies {
+
+    //noinspection UseTomlInstead
+    implementation("com.github.chrisbanes:PhotoView:2.3.0")
+    //noinspection GradleDependency
+    implementation("androidx.appcompat:appcompat:1.6.1")
+    //noinspection GradleDependency
+    implementation("com.google.android.material:material:1.11.0")
+
     implementation(libs.appcompat)
     implementation(libs.material)
     implementation(libs.activity)

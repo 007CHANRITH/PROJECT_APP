@@ -1,5 +1,6 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
+
     <!-- App Name -->
     <string name="app_name">EZ Talk</string>
 
@@ -20,7 +21,7 @@
     <string name="otp_verification">OTP Verification</string>
     <string name="otp_subtitle">Enter the verification code we just sent on your email address.</string>
     <string name="verify">Verify</string>
-    <string name="didnt_receive_code">Didn\'t received code?</string>
+    <string name="didnt_receive_code">Didn\'t receive code?</string>
     <string name="resend">Resend</string>
 
     <!-- Password -->
@@ -57,7 +58,7 @@
     <string name="settings">Settings</string>
 
     <!-- Chat -->
-    <string name="study_room">study room</string>
+    <string name="study_room">Study Room</string>
     <string name="type_message">Type a message...</string>
     <string name="send">Send</string>
     <string name="online">Online</string>
@@ -103,38 +104,7 @@
     <string name="speaker">Speaker</string>
     <string name="call_duration">%s</string>
 
-    <!-- User Actions -->
-    <string name="view_profile">View Profile</string>
-    <string name="send_message">Send Message</string>
-    <string name="voice_call_action">Voice Call</string>
-    <string name="video_call_action">Video Call</string>
-    <string name="block_user">Block User</string>
-    <string name="unblock_user">Unblock User</string>
-    <string name="report_user">Report User</string>
-
-    <!-- Profile -->
-    <string name="edit_profile">Edit Profile</string>
-    <string name="change_photo">Change Photo</string>
-    <string name="status_message">Status Message</string>
-    <string name="about">About</string>
-    <string name="phone">Phone</string>
-
-    <!-- Settings -->
-    <string name="account">Account</string>
-    <string name="privacy">Privacy</string>
-    <string name="notifications">Notifications</string>
-    <string name="appearance">Appearance</string>
-    <string name="language">Language</string>
-    <string name="help_support">Help &amp; Support</string>
-    <string name="logout">Logout</string>
-
-    <!-- Notifications -->
-    <string name="new_message">New Message</string>
-    <string name="new_message_from">New message from %s</string>
-    <string name="missed_call">Missed Call</string>
-    <string name="missed_call_from">Missed call from %s</string>
-
-    <!-- Common -->
+    <!-- Common Actions -->
     <string name="save">Save</string>
     <string name="cancel">Cancel</string>
     <string name="delete">Delete</string>
@@ -149,31 +119,13 @@
     <string name="retry">Retry</string>
     <string name="search">Search</string>
     <string name="search_hint">Search...</string>
-
-    <!-- Errors -->
-    <string name="error_network">Network error. Please check your connection.</string>
-    <string name="error_generic">Something went wrong. Please try again.</string>
-    <string name="error_invalid_email">Invalid email address</string>
-    <string name="error_invalid_password">Password must be at least 6 characters</string>
-    <string name="error_passwords_dont_match">Passwords don\'t match</string>
-    <string name="error_empty_field">This field cannot be empty</string>
-    <string name="error_login_failed">Login failed. Please check your credentials.</string>
-    <string name="error_registration_failed">Registration failed. Please try again.</string>
-
-    <!-- Share -->
-    <string name="share_screen">Share Screen</string>
-    <string name="share_file">Share File</string>
-    <string name="share_location">Share Location</string>
-    <string name="share_contact">Share Contact</string>
-    <string name="choose_app">Choose an app</string>
-
-    <!-- Media -->
-    <string name="camera">Camera</string>
-    <string name="gallery">Gallery</string>
-    <string name="audio">Audio</string>
-    <string name="video">Video</string>
-    <string name="document">Document</string>
-    <string name="attachment">Attachment</string>
+    <string name="more">More</string>
+    <string name="back">Back</string>
+    <string name="close">Close</string>
+    <string name="clear">Clear</string>
+    <string name="next">Next</string>
+    <string name="skip">Skip</string>
+    <string name="leave">Leave</string>
 
     <!-- Time -->
     <string name="just_now">Just now</string>
@@ -186,38 +138,100 @@
     <string name="teacher">Teacher</string>
     <string name="student">Student</string>
     <string name="select_role">Select your role</string>
-    <string name="menu" />
-    <string name="more" />
-    <string name="forgot_password_icon" />
-    <string name="email_icon" />
 
-    <!-- Default strings.xml (English) - res/values/strings.xml -->
+    <!-- User Actions -->
+    <string name="view_profile">View Profile</string>
+    <string name="block_user">Block User</string>
+    <string name="unblock_user">Unblock User</string>
+    <string name="report_user">Report User</string>
+    <string name="logout">Logout</string>
 
+    <!-- Add Friend -->
+    <string name="add_friend_description">Enter username or email to add friend</string>
+    <string name="username_or_email_hint">Username or email</string>
+    <string name="add">Add</string>
+    <string name="add_friend_button">Add Friend</string>
 
-        <!-- Add Friend Dialog -->
-        <string name="add_friend_description">Enter username or email to add friend</string>
-        <string name="username_or_email_hint">Username or email</string>
-        <string name="add">Add</string>
-        <string name="add_friend_button">Add Friend</string>
-        <string name="voice_message" />
-        <string name="emoji" />
-        <string name="slide_to_cancel" />
-        <string name="recording" />
-        <string name="search_contacts" />
-        <string name="enter_group_description" />
-        <string name="group_description_optional" />
-        <string name="enter_group_name" />
-        <string name="add_group_icon" />
-        <string name="add_photo" />
-        <string name="group_icon" />
-        <string name="create" />
-        <string name="back" />
-        <string name="group_info">Group Info</string>
-        <string name="media">Media</string>
-        <string name="add_member">Add Member</string>
-        <string name="exit_group">Exit Group</string>
-        <string name="remove">Remove</string>
+    <!-- Group & Channel -->
+    <string name="create">Create</string>
+    <string name="group_icon">Group Icon</string>
+    <string name="add_group_icon">Add Group Icon</string>
+    <string name="enter_group_name">Enter group name</string>
+    <string name="group_description_optional">Group description (optional)</string>
+    <string name="enter_group_description">Enter group description</string>
+    <string name="search_contacts">Search contacts</string>
+    <string name="group_info">Group Info</string>
+    <string name="media">Media</string>
+    <string name="add_member">Add Member</string>
+    <string name="exit_group">Exit Group</string>
+    <string name="remove">Remove</string>
+    <string name="group_image">Group Image</string>
+    <string name="group_description">Group Description</string>
+    <string name="group_settings">Group Settings</string>
+    <string name="private_group">Private Group</string>
+    <string name="mute_notifications">Mute Notifications</string>
 
+    <!-- Channels -->
+    <string name="channels">Channels</string>
+    <string name="channel_name">Channel Name</string>
+    <string name="channel_description">Channel Description</string>
+    <string name="channel_image">Channel Image</string>
+    <string name="subscriber_count">%d subscribers</string>
+    <string name="subscribe">Subscribe</string>
+    <string name="create_channel">Create Channel</string>
+    <string name="discover">Discover</string>
+    <string name="my_channels">My Channels</string>
 
+    <!-- Voice/Video Message -->
+    <string name="voice_message">Voice message</string>
+    <string name="recording">Recording</string>
+    <string name="slide_to_cancel">Slide to cancel</string>
+    <string name="emoji">Emoji</string>
+    <string name="attachment">Attachment</string>
+    <string name="add_photo">Add photo</string>
+
+    <!-- Video Call -->
+    <string name="calling">Calling…</string>
+    <string name="ringing">Ringing</string>
+    <string name="call_connected">Connected</string>
+
+    <!-- Message Actions -->
+    <string name="delete_message">Delete message?</string>
+    <string name="delete_message_description">This action cannot be undone</string>
+    <string name="delete_for_me">Delete for me</string>
+    <string name="delete_for_everyone">Delete for everyone</string>
+
+    <!-- Onboarding -->
+    <string name="onboarding_image">Onboarding illustration</string>
+    <string name="onboarding_title">Welcome to EZ Talk</string>
+    <string name="onboarding_description">Connect with friends and family</string>
+
+    <!-- Search -->
+    <string name="all">All</string>
+    <string name="messages">Messages</string>
+    <string name="no_results">No Results Found</string>
+    <string name="empty_message">Try a different search term</string>
+
+    <!-- Media & Attachments -->
+    <string name="play">Play</string>
+    <string name="play_video">Play video</string>
+    <string name="video_message">Video message</string>
+    <string name="location">Location</string>
+    <string name="location_message">Location message</string>
+    <string name="image_message">Image</string>
+    <string name="file_attachment">File</string>
+    <string name="contact">Contact</string>
+    <string name="share_content">Share content</string>
+    <string name="toggle_video">Video on/off</string>
+    <string name="mute_mic">Mute microphone</string>
+    <string name="switch_camera">Switch camera</string>
+    <string name="your_video">Your video</string>
+
+    <!-- Miscellaneous -->
+    <string name="call">Call</string>
+    <string name="download">Download</string>
+    <string name="share">Share</string>
+    <string name="description">Description</string>
+    <string name="empty_state">No data available</string>
 
 </resources>

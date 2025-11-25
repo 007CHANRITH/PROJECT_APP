@@ -1,0 +1,50 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout
+    xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:orientation="vertical"
+    android:gravity="center"
+    android:padding="@dimen/spacing_xlarge">
+
+    <ImageView
+        android:id="@+id/iv_empty"
+        android:layout_width="120dp"
+        android:layout_height="120dp"
+        android:src="@drawable/ic_empty_state"
+        android:alpha="0.5"
+        android:contentDescription="@string/empty_state" />
+
+    <TextView
+        android:id="@+id/tv_empty_title"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:text="@string/no_results"
+        android:textSize="@dimen/text_size_title"
+        android:textColor="@color/text_primary"
+        android:fontFamily="sans-serif-medium"
+        android:layout_marginTop="@dimen/spacing_medium" />
+
+    <TextView
+        android:id="@+id/tv_empty_message"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:text="@string/empty_message"
+        android:textSize="@dimen/text_size_body"
+        android:textColor="@color/text_secondary"
+        android:gravity="center"
+        android:layout_marginTop="@dimen/spacing_small" />
+
+    <com.google.android.material.button.MaterialButton
+        android:id="@+id/btn_action"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:text="@string/action"
+        android:textColor="@color/button_text"
+        android:backgroundTint="@color/primary_purple"
+        android:visibility="gone"
+        android:layout_marginTop="@dimen/spacing_large"
+        app:cornerRadius="@dimen/corner_radius_medium"
+        xmlns:app="http://schemas.android.com/apk/res-auto" />
+
+</LinearLayout>

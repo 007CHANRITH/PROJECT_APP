@@ -14,4 +14,16 @@
     <item name="rvCallHistory" type="id" />
     <item name="tvRole" type="id" />
     <item name="tvStatus" type="id" />
+    <item name="fabEndCall" type="id" />
+    <item name="fabVideo" type="id" />
+    <item name="fabMic" type="id" />
+    <item name="controlsContainer" type="id" />
+    <item name="cvCallDuration" type="id" />
+    <item name="ivLocalAvatar" type="id" />
+    <item name="localVideoContainer" type="id" />
+    <item name="tvCallStatus" type="id" />
+    <item name="tvRemoteName" type="id" />
+    <item name="ivRemoteAvatar" type="id" />
+    <item name="cvRemoteAvatar" type="id" />
+    <item name="remoteVideoContainer" type="id" />
 </resources>

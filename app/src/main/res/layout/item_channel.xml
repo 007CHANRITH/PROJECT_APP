@@ -1,0 +1,93 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!--suppress ALL -->
+<com.google.android.material.card.MaterialCardView
+    xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    xmlns:tools="http://schemas.android.com/tools"
+    android:layout_width="match_parent"
+    android:layout_height="wrap_content"
+    android:layout_marginStart="@dimen/spacing_small"
+    android:layout_marginEnd="@dimen/spacing_small"
+    android:layout_marginTop="@dimen/spacing_tiny"
+    android:layout_marginBottom="@dimen/spacing_tiny"
+    app:cardBackgroundColor="@color/background_card"
+    app:cardCornerRadius="@dimen/corner_radius_medium"
+    app:cardElevation="@dimen/elevation_low">
+
+    <androidx.constraintlayout.widget.ConstraintLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:padding="@dimen/spacing_medium">
+
+        <com.google.android.material.imageview.ShapeableImageView
+            android:id="@+id/iv_channel_avatar"
+            android:layout_width="@dimen/avatar_size_large"
+            android:layout_height="@dimen/avatar_size_large"
+            android:src="@drawable/ic_channel_default"
+            android:scaleType="centerCrop"
+            app:strokeColor="@color/primary_purple"
+            app:strokeWidth="2dp"
+            app:shapeAppearanceOverlay="@style/CircleImageStyle"
+            app:layout_constraintTop_toTopOf="parent"
+            app:layout_constraintStart_toStartOf="parent"
+            android:contentDescription="@string/channel_avatar" />
+
+        <TextView
+            android:id="@+id/tv_channel_name"
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
+            android:text="@string/channel_name"
+            android:textSize="@dimen/text_size_body_large"
+            android:textColor="@color/text_primary"
+            android:fontFamily="sans-serif-medium"
+            android:maxLines="1"
+            android:ellipsize="end"
+            android:layout_marginStart="@dimen/spacing_normal"
+            app:layout_constraintTop_toTopOf="@id/iv_channel_avatar"
+            app:layout_constraintStart_toEndOf="@id/iv_channel_avatar"
+            app:layout_constraintEnd_toStartOf="@id/btn_subscribe" />
+
+        <TextView
+            android:id="@+id/tv_channel_description"
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
+            android:text="@string/channel_description"
+            android:textSize="@dimen/text_size_body"
+            android:textColor="@color/text_secondary"
+            android:maxLines="2"
+            android:ellipsize="end"
+            android:layout_marginStart="@dimen/spacing_normal"
+            android:layout_marginTop="@dimen/spacing_tiny"
+            app:layout_constraintTop_toBottomOf="@id/tv_channel_name"
+            app:layout_constraintStart_toEndOf="@id/iv_channel_avatar"
+            app:layout_constraintEnd_toStartOf="@id/btn_subscribe" />
+
+        <TextView
+            android:id="@+id/tv_subscriber_count"
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
+            android:text="@string/subscriber_count"
+            android:textSize="@dimen/text_size_caption"
+            android:textColor="@color/text_hint"
+            android:layout_marginStart="@dimen/spacing_normal"
+            android:layout_marginTop="@dimen/spacing_tiny"
+            app:layout_constraintTop_toBottomOf="@id/tv_channel_description"
+            app:layout_constraintStart_toEndOf="@id/iv_channel_avatar"
+            app:layout_constraintBottom_toBottomOf="@id/iv_channel_avatar" />
+
+        <com.google.android.material.button.MaterialButton
+            android:id="@+id/btn_subscribe"
+            style="@style/Widget.Material3.Button"
+            android:layout_width="wrap_content"
+            android:layout_height="36dp"
+            android:text="@string/subscribe"
+            android:textSize="@dimen/text_size_caption"
+            android:textColor="@android:color/white"
+            android:backgroundTint="@color/primary_purple"
+            app:cornerRadius="@dimen/corner_radius_small"
+            app:layout_constraintTop_toTopOf="parent"
+            app:layout_constraintEnd_toEndOf="parent" />
+
+    </androidx.constraintlayout.widget.ConstraintLayout>
+
+</com.google.android.material.card.MaterialCardView>

@@ -81,4 +81,9 @@
 
     <!-- Status Indicator -->
     <dimen name="status_indicator_size">12dp</dimen>
+
+    <?xml version="1.0" encoding="utf-8"?>
+
+
+
 </resources>
