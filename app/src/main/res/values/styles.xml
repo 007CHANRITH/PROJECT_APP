@@ -2,7 +2,7 @@
 <resources>
 
     <!-- Outlined Button Style -->
-    <style name="Widget.EZTalk.Button.Outlined" parent="Widget.MaterialComponents.Button.OutlinedButton">
+    <style name="Style.Widget.EZTalk.Button.Outlined" parent="Widget.MaterialComponents.Button.OutlinedButton">
         <item name="strokeColor">@color/primary_purple</item>
         <item name="strokeWidth">2dp</item>
         <item name="android:textColor">@color/primary_purple</item>
@@ -26,7 +26,7 @@
     </style>
 
     <!-- Text Button Style -->
-    <style name="Widget.EZTalk.Button.Text" parent="Widget.MaterialComponents.Button.TextButton">
+    <style name="Style.Widget.EZTalk.Button.Text" parent="Widget.MaterialComponents.Button.TextButton">
         <item name="android:textColor">@color/primary_purple</item>
         <item name="rippleColor">@color/primary_purple_light</item>
         <item name="cornerRadius">16dp</item>
@@ -71,6 +71,15 @@
     <style name="CircleImageStyle">
         <item name="cornerFamily">rounded</item>
         <item name="cornerSize">50%</item>
+    </style>
+
+    !--this, i need to add this while debuging so i dont where it belong-->
+    <style name="TextAppearance.App.CollapsingToolbar.Expanded" parent="TextAppearance.MaterialComponents.Headline4">
+        <item name="android:textColor">@android:color/white</item>
+        <item name="android:shadowColor">#80000000</item>
+        <item name="android:shadowDx">0</item>
+        <item name="android:shadowDy">2</item>
+        <item name="android:shadowRadius">4</item>
     </style>
 
 </resources>

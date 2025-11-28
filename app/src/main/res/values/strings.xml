@@ -253,6 +253,16 @@
     <string name="result_subtitle">result_subtitle</string>
     <string name="time">time</string>
 
+    !--this i need to add this while debuging so i dont where it belong-->
+    <string name="default_notification_channel_id">default_channel</string>
+    <string name="channel_avatar">Channel Avatar</string>
+    <string name="status_message">Status Message</string><string name="notifications">Notifications</string>
+    <string name="appearance">Appearance</string>
+    <string name="language">Language</string>
+    <string name="avatar">Avatar</string>
+    <string name="call_type">Call Type</string>
+    <string name="type_indicator">Type</string>
+    <string name="action">Action</string>
 
 
 </resources>

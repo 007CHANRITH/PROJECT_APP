@@ -59,11 +59,11 @@
 
     <!-- Chat -->
     <string name="study_room">បន្ទប់សិក្សា</string>
-    <string name="type_message">វាយសារ...</string>
+    <string name="type_message">វាយសារ&#8230;</string>
     <string name="send">ផ្ញើ</string>
     <string name="online">លើបណ្តាញ</string>
     <string name="offline">ក្រៅបណ្តាញ</string>
-    <string name="typing">កំពុងវាយ...</string>
+    <string name="typing">កំពុងវាយ&#8230;</string>
     <string name="last_seen">បានឃើញចុងក្រោយ %s</string>
 
     <!-- Group & Channel -->
@@ -113,12 +113,12 @@
     <string name="ok">យល់ព្រម</string>
     <string name="yes">បាទ/ចាស</string>
     <string name="no">ទេ</string>
-    <string name="loading">កំពុងផ្ទុក...</string>
+    <string name="loading">កំពុងផ្ទុក&#8230;</string>
     <string name="error">កំហុស</string>
     <string name="success">ជោគជ័យ</string>
     <string name="retry">ព្យាយាមម្តងទៀត</string>
     <string name="search">ស្វែងរក</string>
-    <string name="search_hint">ស្វែងរក...</string>
+    <string name="search_hint">ស្វែងរក&#8230;</string>
     <string name="more">ច្រើនទៀត</string>
     <string name="back">ត្រឡប់ក្រោយ</string>
     <string name="close">បិទ</string>
@@ -238,23 +238,32 @@
     <string name="camera"> កាមេរ៉ា</string>
     <string name="audio">តន្ត្រី</string>
 
-    <string name="change_photo_kh">ប្ដូររូបភាព</string>
+    <string name="change_photo">ប្ដូររូបភាព</string>
 
     <!-- Account -->
 
-    <string name="account_kh">គណនី</string>
+    <string name="account">គណនី</string>
 
     <!-- Privacy -->
-    <string name="privacy_kh">ភាពឯកជន</string>
-    <string name="edit_profile_kh">កែប្រែប្រវត្តិរូប</string>
+    <string name="privacy">ភាពឯកជន</string>
+    <string name="edit_profile">កែប្រែប្រវត្តិរូប</string>
     <!-- Contact Name -->
-    <string name="contact_name_kh">ឈ្មោះទំនាក់ទំនង</string>
+    <string name="contact_name">ឈ្មោះទំនាក់ទំនង</string>
     <!-- Call Info -->
-    <string name="call_info_kh">ព័ត៌មានការហៅ</string>
+    <string name="call_info">ព័ត៌មានការហៅ</string>
     <string name="result_title">ចំណងជើងលទ្ធផល</string>
     <string name="result_subtitle">ចំណងជើងរងលទ្ធផល</string>
     <string name="time">ពេលវេលា</string>
-
+<!--this i need to add this while debuging so i dont where it belong-->
+    <string name="default_notification_channel_id">default_channel</string>
+    <string name="channel_avatar">Channel Avatar</string>
+    <string name="status_message">Status Message</string><string name="notifications">Notifications</string>
+    <string name="appearance">Appearance</string>
+    <string name="language">Language</string>
+    <string name="avatar">Avatar</string>
+    <string name="call_type">Call Type</string>
+    <string name="type_indicator">Type</string>
+    <string name="action">Action</string>
 
 
 
