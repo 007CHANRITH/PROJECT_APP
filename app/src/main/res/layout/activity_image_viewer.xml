@@ -7,15 +7,15 @@
     android:layout_height="match_parent"
     android:background="@android:color/black">
 
-    <!-- Zoomable ImageView -->
-    <com.github.chrisbanes.photoview.PhotoView
-        android:id="@+id/photoView"
-        android:layout_width="match_parent"
-        android:layout_height="match_parent"
-        android:scaleType="fitCenter"
-        android:contentDescription="@string/image" />
+<!--    &lt;!&ndash; Zoomable ImageView &ndash;&gt;-->
+<!--    <com.github.chrisbanes.photoview.PhotoView-->
+<!--        android:id="@+id/photoView"-->
+<!--        android:layout_width="match_parent"-->
+<!--        android:layout_height="match_parent"-->
+<!--        android:scaleType="fitCenter"-->
+<!--        android:contentDescription="@string/image" />-->
 
-    <!-- Top Bar (semi-transparent) -->
+<!--    &lt;!&ndash; Top Bar (semi-transparent) &ndash;&gt;-->
     <LinearLayout
         android:id="@+id/topBar"
         android:layout_width="0dp"

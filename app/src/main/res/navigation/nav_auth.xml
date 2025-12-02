@@ -13,9 +13,10 @@
         tools:layout="@layout/activity_welcome">
         <action
             android:id="@+id/action_welcome_to_login"
-            app:destination="@id/loginFragment"
-            app:enterAnim="@anim/slide_in_right"
-            app:exitAnim="@anim/slide_out_left" />
+            app:destination="@id/loginFragment"  />
+<!--            app:enterAnim="@anim/slide_in_right"-->
+<!--            app:exitAnim="@anim/slide_out_left" -->
+
         <action
             android:id="@+id/action_welcome_to_signup"
             app:destination="@id/signupFragment" />

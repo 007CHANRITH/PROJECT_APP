@@ -50,8 +50,8 @@
         tools:layout="@layout/fragment_calls">
 
         <action
-            android:id="@+id/action_calls_to_call"
-            app:destination="@id/callActivity" />
+            android:id="@+id/action_calls_to_call"/>
+<!--            app:destination="@id/callActivity" -->
     </fragment>
 
     <!-- Contacts Fragment -->

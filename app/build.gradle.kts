@@ -36,7 +36,8 @@ android {
 dependencies {
 
     //noinspection UseTomlInstead
-    implementation("com.github.chrisbanes:PhotoView:2.3.0")
+
+    implementation("com.github.Baseflow:PhotoView:2.3.0")
     //noinspection GradleDependency
     implementation("androidx.appcompat:appcompat:1.6.1")
     //noinspection GradleDependency
