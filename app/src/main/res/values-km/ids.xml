@@ -1,0 +1,13 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <item name="main" type="id" />
+    <item name="tvPhone" type="id" />
+    <item name="tvAdmin" type="id" />
+    <item name="tvChatName" type="id" />
+    <item name="tvUnreadCount" type="id" />
+    <item name="ivProfilePhoto" type="id" />
+    <item name="cardEditProfile" type="id" />
+    <item name="cardSettings" type="id" />
+    <item name="cardLogout" type="id" />
+    <item name="tilNewPassword" type="id" />
+</resources>

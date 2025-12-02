@@ -1,0 +1,31 @@
+<vector xmlns:android="http://schemas.android.com/apk/res/android"
+    android:width="280dp"
+    android:height="280dp"
+    android:viewportWidth="280"
+    android:viewportHeight="280">
+
+    <!-- Background Circle -->
+    <path
+        android:fillColor="#FD79A8"
+        android:pathData="M140,140m-120,0a120,120 0,1 1,240 0a120,120 0,1 1,-240 0" />
+
+    <!-- Photo Frame -->
+    <path
+        android:fillColor="#FFFFFF"
+        android:pathData="M80,80 L200,80 Q210,80 210,90 L210,190 Q210,200 200,200 L80,200 Q70,200 70,190 L70,90 Q70,80 80,80 Z" />
+
+    <!-- Image Icon - Mountain -->
+    <path
+        android:fillColor="#FD79A8"
+        android:pathData="M90,160 L110,130 L130,150 L150,120 L190,160 Z" />
+
+    <!-- Image Icon - Sun/Circle -->
+    <path
+        android:fillColor="#FDCB6E"
+        android:pathData="M170,110 m-12,0 a12,12 0,1 1,24 0 a12,12 0,1 1,-24 0" />
+
+    <!-- Heart Icon -->
+    <path
+        android:fillColor="#E84393"
+        android:pathData="M140,180 L130,170 Q120,160 120,150 Q120,140 130,140 Q135,140 140,145 Q145,140 150,140 Q160,140 160,150 Q160,160 150,170 Z" />
+</vector>

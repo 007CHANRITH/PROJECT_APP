@@ -1,0 +1,38 @@
+<vector xmlns:android="http://schemas.android.com/apk/res/android"
+    android:width="280dp"
+    android:height="280dp"
+    android:viewportWidth="280"
+    android:viewportHeight="280">
+
+    <!-- Background Circle -->
+    <path
+        android:fillColor="#00D2D3"
+        android:pathData="M140,140m-120,0a120,120 0,1 1,240 0a120,120 0,1 1,-240 0" />
+
+    <!-- Phone/Video Icon Background -->
+    <path
+        android:fillColor="#FFFFFF"
+        android:pathData="M90,90 L190,90 Q200,90 200,100 L200,180 Q200,190 190,190 L90,190 Q80,190 80,180 L80,100 Q80,90 90,90 Z" />
+
+    <!-- Video Camera Icon -->
+    <path
+        android:fillColor="#00D2D3"
+        android:pathData="M110,120 L150,120 L150,160 L110,160 Z" />
+
+    <path
+        android:fillColor="#00D2D3"
+        android:pathData="M150,130 L180,115 L180,165 L150,150 Z" />
+
+    <!-- Microphone Icon -->
+    <path
+        android:fillColor="#01A3A4"
+        android:pathData="M130,110 m-8,0 a8,15 0,1 1,16 0 a8,15 0,1 1,-16 0" />
+
+    <path
+        android:fillColor="#01A3A4"
+        android:pathData="M125,125 Q125,135 130,135 Q135,135 135,125" />
+
+    <path
+        android:fillColor="#01A3A4"
+        android:pathData="M130,135 L130,145 M120,145 L140,145" />
+</vector>

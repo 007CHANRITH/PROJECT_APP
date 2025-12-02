@@ -1,0 +1,275 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources xmlns:tools="http://schemas.android.com/tools">
+
+    <!-- Welcome & Auth -->
+    <string name="welcome_title">សូមស្វាគមន៍! រីករាយដែលបានជួបអ្នកម្តងទៀត!</string>
+    <string name="welcome_subtitle">ចូលរួមជជែកកំសាន្ត និងនិយាយជាមួយមិត្តភក្តិ និងគ្រួសាររបស់អ្នក</string>
+    <string name="login">ចូល</string>
+    <string name="register">ចុះឈ្មោះ</string>
+    <string name="register_title">សួស្តី! ចុះឈ្មោះដើម្បីចាប់ផ្តើម</string>
+    <string name="create_account">បង្កើតគណនី</string>
+    <string name="forgot_password">ភ្លេចពាក្យសម្ងាត់?</string>
+    <string name="forgot_password_title">ភ្លេចពាក្យសម្ងាត់?</string>
+    <string name="forgot_password_subtitle">កុំបារម្ភ! វាកើតឡើង។ សូមបញ្ចូលអ៊ីមែលដែលភ្ជាប់នឹងគណនីរបស់អ្នក។</string>
+    <string name="send_code">ផ្ញើលេខកូដ</string>
+    <string name="remember_password">ចាំពាក្យសម្ងាត់?</string>
+
+    <!-- OTP Verification -->
+    <string name="otp_verification">ការផ្ទៀងផ្ទាត់ OTP</string>
+    <string name="otp_subtitle">បញ្ចូលលេខកូដដែលយើងបានផ្ញើទៅអ៊ីមែលរបស់អ្នក។</string>
+    <string name="verify">ផ្ទៀងផ្ទាត់</string>
+    <string name="didnt_receive_code">មិនបានទទួលលេខកូដ?</string>
+    <string name="resend">ផ្ញើឡើងវិញ</string>
+
+    <!-- Password -->
+    <string name="create_new_password">បង្កើតពាក្យសម្ងាត់ថ្មី</string>
+    <string name="create_password_subtitle">ពាក្យសម្ងាត់ថ្មីត្រូវខុសពីពាក្យសម្ងាត់មុនៗ។</string>
+    <string name="new_password">ពាក្យសម្ងាត់ថ្មី</string>
+    <string name="confirm_password">បញ្ជាក់ពាក្យសម្ងាត់</string>
+    <string name="reset_password">កំណត់ពាក្យសម្ងាត់ឡើងវិញ</string>
+    <string name="password_changed">ពាក្យសម្ងាត់បានផ្លាស់ប្តូរ!</string>
+    <string name="password_changed_subtitle">ពាក្យសម្ងាត់បានផ្លាស់ប្តូរដោយជោគជ័យ។</string>
+    <string name="back_to_login">ត្រឡប់ទៅចូល</string>
+
+    <!-- Social Login -->
+    <string name="or_login_with">ឬចូលជាមួយ</string>
+    <string name="or_register_with">ឬចុះឈ្មោះជាមួយ</string>
+    <string name="dont_have_account">មិនមានគណនី?</string>
+    <string name="register_now">ចុះឈ្មោះឥឡូវ</string>
+    <string name="already_have_account">មានគណនីរួចហើយ?</string>
+    <string name="login_now">ចូលឥឡូវ</string>
+
+    <!-- Input Fields -->
+    <string name="username">ឈ្មោះអ្នកប្រើ</string>
+    <string name="email">អ៊ីមែល</string>
+    <string name="password">ពាក្យសម្ងាត់</string>
+    <string name="phone_number">លេខទូរសព្ទ</string>
+    <string name="full_name">ឈ្មោះពេញ</string>
+
+    <!-- Home & Navigation -->
+    <string name="home">ទំព័រដើម</string>
+    <string name="chats">ការជជែក</string>
+    <string name="calls">ការហៅ</string>
+    <string name="contacts">ទំនាក់ទំនង</string>
+    <string name="profile">ប្រវត្តិរូប</string>
+    <string name="settings">ការកំណត់</string>
+
+    <!-- Chat -->
+    <string name="study_room">បន្ទប់សិក្សា</string>
+    <string name="type_message" tools:ignore="TypographyEllipsis">វាយសារ...</string>
+    <string name="send">ផ្ញើ</string>
+    <string name="online">លើបណ្តាញ</string>
+    <string name="offline">ក្រៅបណ្តាញ</string>
+    <string name="typing" tools:ignore="TypographyEllipsis">កំពុងវាយ...</string>
+    <string name="last_seen">បានឃើញចុងក្រោយ %s</string>
+
+    <!-- Group & Channel -->
+    <string name="create_group">បង្កើតក្រុម</string>
+    <string name="group_name">ឈ្មោះក្រុម</string>
+    <string name="add_members">បន្ថែមសមាជិក</string>
+    <string name="join_channel">ចូលរួមឆានែល</string>
+    <string name="voice_channels">ឆានែលសំឡេង</string>
+    <string name="text_channels">ឆានែលអត្ថបទ</string>
+    <string name="members">សមាជិក</string>
+    <string name="member_count">%d នាក់</string>
+
+    <!-- Messages -->
+    <string name="direct_messages">សារផ្ទាល់</string>
+    <string name="group_messages">សារក្រុម</string>
+    <string name="recent_chats">ការជជែកថ្មីៗ</string>
+    <string name="no_messages">មិនទាន់មានសារ</string>
+    <string name="start_conversation">ចាប់ផ្តើមសន្ទនា</string>
+
+    <!-- Friends -->
+    <string name="friends">មិត្តភក្តិ</string>
+    <string name="online_friends">លើបណ្តាញ - %d</string>
+    <string name="all_friends">មិត្តភក្តិទាំងអស់ - %d</string>
+    <string name="add_friend">បន្ថែមមិត្តភក្តិ</string>
+    <string name="friend_requests">សំណើរមិត្តភក្តិ</string>
+    <string name="blocked_users">អ្នកត្រូវបានប្លុក</string>
+
+    <!-- Calls -->
+    <string name="incoming_call">ការហៅចូល</string>
+    <string name="outgoing_call">ការហៅចេញ</string>
+    <string name="voice_call">ការហៅសំឡេង</string>
+    <string name="video_call">ការហៅវីដេអូ</string>
+    <string name="accept">ទទួល</string>
+    <string name="decline">បដិសេធ</string>
+    <string name="end_call">បញ្ចប់ការហៅ</string>
+    <string name="mute">ស្ងាត់</string>
+    <string name="unmute">បើកសំឡេង</string>
+    <string name="speaker">លើកសំឡេង</string>
+    <string name="call_duration">%s</string>
+
+    <!-- Common Actions -->
+    <string name="save">រក្សាទុក</string>
+    <string name="cancel">បោះបង់</string>
+    <string name="delete">លុប</string>
+    <string name="edit">កែប្រែ</string>
+    <string name="done">រួចរាល់</string>
+    <string name="ok">យល់ព្រម</string>
+    <string name="yes">បាទ/ចាស</string>
+    <string name="no">ទេ</string>
+    <string name="loading" tools:ignore="TypographyEllipsis">កំពុងផ្ទុក...</string>
+    <string name="error">កំហុស</string>
+    <string name="success">ជោគជ័យ</string>
+    <string name="retry">ព្យាយាមម្ដងទៀត</string>
+    <string name="search">ស្វែងរក</string>
+    <string name="search_hint" tools:ignore="TypographyEllipsis">ស្វែងរក...</string>
+    <string name="more">ច្រើនទៀត</string>
+    <string name="back">ត្រឡប់</string>
+    <string name="close">បិទ</string>
+    <string name="clear">សម្អាត</string>
+    <string name="next">បន្ទាប់</string>
+    <string name="skip">រំលង</string>
+    <string name="leave">ចាកចេញ</string>
+
+    <!-- Time -->
+    <string name="just_now">ថេរម្សិលមិញ</string>
+    <string name="minutes_ago">%d នាទីមុន</string>
+    <string name="hours_ago">%d ម៉ោងមុន</string>
+    <string name="yesterday">ម្សិលមិញ</string>
+    <string name="today">ថ្ងៃនេះ</string>
+
+    <!-- Role -->
+    <string name="teacher">គ្រូ</string>
+    <string name="student">សិស្ស</string>
+    <string name="select_role">ជ្រើសរើសតួនាទី</string>
+
+    <!-- User Actions -->
+    <string name="view_profile">មើលប្រវត្តិរូប</string>
+    <string name="block_user">ប្លុកអ្នកប្រើ</string>
+    <string name="unblock_user">ឈប់ប្លុក</string>
+    <string name="report_user">រាយការណ៍</string>
+    <string name="logout">ចាកចេញ</string>
+
+    <!-- Add Friend -->
+    <string name="add_friend_description">បញ្ចូលឈ្មោះអ្នកប្រើ ឬ អ៊ីមែល ដើម្បីបន្ថែមមិត្ត</string>
+    <string name="username_or_email_hint">ឈ្មោះអ្នកប្រើ ឬ អ៊ីមែល</string>
+    <string name="add">បន្ថែម</string>
+    <string name="add_friend_button">បន្ថែមមិត្តភក្តិ</string>
+
+    <!-- Group & Channel -->
+    <string name="create">បង្កើត</string>
+    <string name="group_icon">រូបតំណាងក្រុម</string>
+    <string name="add_group_icon">បន្ថែមរូបតំណាង</string>
+    <string name="enter_group_name">បញ្ចូលឈ្មោះក្រុម</string>
+    <string name="group_description_optional">ការពិពណ៌នាក្រុម (មិនចាំបាច់)</string>
+    <string name="enter_group_description">បញ្ចូលការពិពណ៌នា</string>
+    <string name="search_contacts">ស្វែងរកទំនាក់ទំនង</string>
+    <string name="group_info">ព័ត៌មានក្រុម</string>
+    <string name="media">មេឌា</string>
+    <string name="add_member">បន្ថែមសមាជិក</string>
+    <string name="exit_group">ចាកចេញពីក្រុម</string>
+    <string name="remove">យកចេញ</string>
+    <string name="group_image">រូបភាពក្រុម</string>
+    <string name="group_description">ការពិពណ៌នាក្រុម</string>
+    <string name="group_settings">ការកំណត់ក្រុម</string>
+    <string name="private_group">ក្រុមឯកជន</string>
+    <string name="mute_notifications">បិទការជូនដំណឹង</string>
+
+    <!-- Channels -->
+    <string name="channels">ឆានែល</string>
+    <string name="channel_name">ឈ្មោះឆានែល</string>
+    <string name="channel_description">ការពិពណ៌នាឆានែល</string>
+    <string name="channel_image">រូបភាពឆានែល</string>
+    <string name="subscriber_count">%d អ្នកជាវ</string>
+    <string name="subscribe">ជាវ</string>
+    <string name="create_channel">បង្កើតឆានែល</string>
+    <string name="discover">រកឃើញ</string>
+    <string name="my_channels">ឆានែលរបស់ខ្ញុំ</string>
+
+    <!-- Voice/Video Message -->
+    <string name="voice_message">សារសំឡេង</string>
+    <string name="recording">កំពុងថត</string>
+    <string name="slide_to_cancel">រអិលដើម្បីបោះបង់</string>
+    <string name="emoji">អ៊ីមូជី</string>
+    <string name="attachment">ឯកសារ​ភ្ជាប់</string>
+    <string name="add_photo">បន្ថែមរូប</string>
+
+    <!-- Video Call -->
+    <string name="calling">កំពុងហៅ…</string>
+    <string name="ringing">កំពុងរ៉ិន</string>
+    <string name="call_connected">បានតភ្ជាប់</string>
+
+    <!-- Message Actions -->
+    <string name="delete_message">លុបសារ?</string>
+    <string name="delete_message_description">សកម្មភាពនេះមិនអាចមិនធ្វើវិញបានទេ</string>
+    <string name="delete_for_me">លុបសម្រាប់ខ្ញុំ</string>
+    <string name="delete_for_everyone">លុបទាំងអស់គ្នា</string>
+
+    <!-- Onboarding -->
+    <string name="onboarding_image">រូបភាពណែនាំ</string>
+    <string name="onboarding_title">សូមស្វាគមន៍មកកាន់ EZ Talk</string>
+    <string name="onboarding_description">តភ្ជាប់ជាមួយមិត្តភក្តិ និងគ្រួសារ</string>
+
+    <!-- Search -->
+    <string name="all">ទាំងអស់</string>
+    <string name="messages">សារ</string>
+    <string name="no_results">រកមិនឃើញលទ្ធផល</string>
+    <string name="empty_message">សូមសាកល្បងពាក្យផ្សេងទៀត</string>
+
+    <!-- Media & Attachments -->
+    <string name="play">ចាក់</string>
+    <string name="play_video">ចាក់វីដេអូ</string>
+    <string name="video_message">សារវីដេអូ</string>
+    <string name="location">ទីតាំង</string>
+    <string name="location_message">សារទីតាំង</string>
+    <string name="image_message">រូបភាព</string>
+    <string name="file_attachment">ឯកសារ</string>
+    <string name="contact">ទំនាក់ទំនង</string>
+    <string name="share_content">ចែករំលែក</string>
+    <string name="toggle_video">បិទ/បើកវីដេអូ</string>
+    <string name="mute_mic">បិទមីក្រូ</string>
+    <string name="switch_camera">ប្តូរកាមេរ៉ា</string>
+    <string name="your_video">វីដេអូរបស់អ្នក</string>
+
+    <!-- Misc -->
+    <string name="call">ហៅ</string>
+    <string name="download">ទាញយក</string>
+    <string name="share">ចែករំលែក</string>
+    <string name="description">ការពិពណ៌នា</string>
+    <string name="empty_state">គ្មានទិន្នន័យ</string>
+    <string name="document">ឯកសារ</string>
+    <string name="gallery">វិចិត្រសាល</string>
+    <string name="camera">កាមេរ៉ា</string>
+    <string name="audio">អូឌីយ៉ូ</string>
+    <string name="change_photo">ប្តូររូប</string>
+
+    <!-- Account -->
+    <string name="account">គណនី</string>
+
+    <!-- Privacy -->
+    <string name="privacy">ភាពឯកជន</string>
+
+    <!-- Edit Profile -->
+    <string name="edit_profile">កែប្រវត្តិរូប</string>
+
+    <!-- Contact Name -->
+    <string name="contact_name">ឈ្មោះទំនាក់ទំនង</string>
+
+    <!-- Call Info -->
+    <string name="call_info">ព័ត៌មានការហៅ</string>
+
+    <!-- Results -->
+    <string name="result_title">ចំណងជើងលទ្ធផល</string>
+    <string name="result_subtitle">ចំណងជើងរងលទ្ធផល</string>
+    <string name="time">ពេលវេលា</string>
+
+    <!-- Notifications -->
+    <string name="notifications">ការជូនដំណឹង</string>
+
+    <!-- Settings Activity -->
+    <string name="select_language">ជ្រើសរើសភាសា</string>
+    <string name="language_changed">បានប្តូរភាសារួចរាល់</string>
+    <string name="dark_mode_enabled">បានបើករបៀបងងឹត</string>
+    <string name="light_mode_enabled">បានបើករបៀបភ្លឺ</string>
+    <string name="message_notif_enabled">បានបើកការជូនដំណឹងសារ</string>
+    <string name="message_notif_disabled">បានបិទការជូនដំណឹងសារ</string>
+    <string name="call_notif_enabled">បានបើកការជូនដំណឹងការហៅ</string>
+    <string name="call_notif_disabled">បានបិទការជូនដំណឹងការហៅ</string>
+
+    <!-- Status Message -->
+    <string name="status_message">សារស្ថានភាព</string>
+
+</resources>
