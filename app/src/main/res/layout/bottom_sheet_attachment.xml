@@ -2,6 +2,7 @@
 <LinearLayout
     xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:app="http://schemas.android.com/apk/res-auto"
+    xmlns:tools="http://schemas.android.com/tools"
     android:layout_width="match_parent"
     android:layout_height="wrap_content"
     android:orientation="vertical"
@@ -136,9 +137,10 @@
                     android:layout_width="28dp"
                     android:layout_height="28dp"
                     android:layout_gravity="center"
+                    android:contentDescription="@string/document"
                     android:src="@drawable/ic_document"
                     app:tint="@android:color/white"
-                    android:contentDescription="@string/document" />
+                    tools:ignore="ImageContrastCheck" />
 
             </androidx.cardview.widget.CardView>
 
@@ -175,9 +177,10 @@
                     android:layout_width="28dp"
                     android:layout_height="28dp"
                     android:layout_gravity="center"
+                    android:contentDescription="@string/audio"
                     android:src="@drawable/ic_music"
                     app:tint="@android:color/white"
-                    android:contentDescription="@string/audio" />
+                    tools:ignore="ImageContrastCheck" />
 
             </androidx.cardview.widget.CardView>
 
@@ -253,9 +256,10 @@
                     android:layout_width="28dp"
                     android:layout_height="28dp"
                     android:layout_gravity="center"
+                    android:contentDescription="@string/contact"
                     android:src="@drawable/ic_contacts"
                     app:tint="@android:color/white"
-                    android:contentDescription="@string/contact" />
+                    tools:ignore="ImageContrastCheck" />
 
             </androidx.cardview.widget.CardView>
 

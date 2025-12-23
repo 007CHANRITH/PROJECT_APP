@@ -8,10 +8,10 @@
             <InsightsFilterSettings>
               <option name="connection">
                 <ConnectionSetting>
-                  <option name="appId" value="PLACEHOLDER" />
-                  <option name="mobileSdkAppId" value="" />
-                  <option name="projectId" value="" />
-                  <option name="projectNumber" value="" />
+                  <option name="appId" value="com.example.project_ez_talk" />
+                  <option name="mobileSdkAppId" value="1:883050824460:android:f384f0e93b28c655513f29" />
+                  <option name="projectId" value="project-ez-talk-dccea" />
+                  <option name="projectNumber" value="883050824460" />
                 </ConnectionSetting>
               </option>
               <option name="signal" value="SIGNAL_UNSPECIFIED" />
