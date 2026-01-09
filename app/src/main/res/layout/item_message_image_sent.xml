@@ -1,0 +1,126 @@
+<?xml version="1.0" encoding="utf-8"?>
+<androidx.constraintlayout.widget.ConstraintLayout
+    xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    xmlns:tools="http://schemas.android.com/tools"
+    android:layout_width="match_parent"
+    android:layout_height="wrap_content"
+    android:paddingStart="80dp"
+    android:paddingEnd="8dp"
+    android:paddingTop="4dp"
+    android:paddingBottom="4dp">
+
+    <!-- Message Card -->
+    <androidx.cardview.widget.CardView
+        android:id="@+id/cvMessage"
+        android:layout_width="0dp"
+        android:layout_height="wrap_content"
+        app:cardBackgroundColor="@color/message_sent"
+        app:cardCornerRadius="16dp"
+        app:cardElevation="2dp"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintTop_toTopOf="parent">
+
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:orientation="vertical">
+
+            <!-- Image Container -->
+            <androidx.cardview.widget.CardView
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_margin="8dp"
+                app:cardCornerRadius="12dp"
+                app:cardElevation="0dp">
+
+                <FrameLayout
+                    android:layout_width="match_parent"
+                    android:layout_height="260dp">
+
+                    <!-- Main Image -->
+                    <ImageView
+                        android:id="@+id/ivImage"
+                        android:layout_width="match_parent"
+                        android:layout_height="match_parent"
+                        android:contentDescription="@string/image_message"
+                        android:scaleType="centerCrop"
+                        android:background="@color/background_secondary"
+                        tools:src="@tools:sample/backgrounds/scenic" />
+
+                    <!-- Loading Progress -->
+                    <ProgressBar
+                        android:id="@+id/progressBar"
+                        android:layout_width="48dp"
+                        android:layout_height="48dp"
+                        android:layout_gravity="center"
+                        android:visibility="gone"
+                        android:indeterminateTint="@android:color/white"
+                        tools:visibility="gone" />
+
+                    <!-- Gradient overlay for timestamp -->
+                    <View
+                        android:layout_width="match_parent"
+                        android:layout_height="60dp"
+                        android:layout_gravity="bottom"
+                        android:background="@drawable/gradient_bottom" />
+
+                    <!-- Timestamp on Image -->
+                    <TextView
+                        android:id="@+id/tvTimeNoCaption"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:layout_gravity="bottom|end"
+                        android:layout_marginEnd="12dp"
+                        android:layout_marginBottom="8dp"
+                        android:text="12:30 PM"
+                        android:textColor="@android:color/white"
+                        android:textSize="11sp"
+                        android:fontFamily="@font/inter_regular"
+                        android:shadowColor="#80000000"
+                        android:shadowDx="0"
+                        android:shadowDy="1"
+                        android:shadowRadius="2"
+                        tools:ignore="HardcodedText" />
+                </FrameLayout>
+            </androidx.cardview.widget.CardView>
+
+            <!-- Caption Section (when caption exists) -->
+            <LinearLayout
+                android:id="@+id/llCaptionContainer"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:orientation="horizontal"
+                android:padding="12dp"
+                android:paddingTop="0dp"
+                android:visibility="gone"
+                tools:visibility="visible">
+
+                <TextView
+                    android:id="@+id/tvCaption"
+                    android:layout_width="0dp"
+                    android:layout_height="wrap_content"
+                    android:layout_weight="1"
+                    android:text="Image caption here"
+                    android:textColor="@android:color/white"
+                    android:textSize="14sp"
+                    android:fontFamily="@font/inter_regular"
+                    tools:ignore="HardcodedText" />
+
+                <TextView
+                    android:id="@+id/tvTimeWithCaption"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:layout_marginStart="8dp"
+                    android:layout_gravity="bottom"
+                    android:text="12:30 PM"
+                    android:textColor="@color/text_tertiary"
+                    android:textSize="11sp"
+                    android:fontFamily="@font/inter_regular"
+                    tools:ignore="HardcodedText" />
+            </LinearLayout>
+        </LinearLayout>
+    </androidx.cardview.widget.CardView>
+
+</androidx.constraintlayout.widget.ConstraintLayout>

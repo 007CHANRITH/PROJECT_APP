@@ -28,14 +28,29 @@ public class AudioPlayerManager {
      * Play audio from URL or file path
      */
     public void playAudio(String audioUrl, PlaybackCallback callback) {
+        Log.d(TAG, "🎵 playAudio called with URL: " + audioUrl);
+        
+        if (audioUrl == null || audioUrl.isEmpty()) {
+            Log.e(TAG, "❌ Audio URL is null or empty");
+            if (callback != null) {
+                callback.onPlaybackError("Audio URL is empty");
+            }
+            return;
+        }
+        
         if (isPlaying && audioUrl.equals(currentAudioUrl)) {
             // Same audio playing, pause it
+            Log.d(TAG, "⏸ Pausing same audio");
             pauseAudio();
+            if (callback != null) {
+                callback.onPlaybackCompleted();
+            }
             return;
         }
 
         // Stop current playback if playing different audio
         if (isPlaying) {
+            Log.d(TAG, "⏹ Stopping previous audio");
             stopAudio();
         }
 
@@ -50,6 +65,7 @@ public class AudioPlayerManager {
                             .build()
             );
 
+            Log.d(TAG, "🔊 Setting data source: " + audioUrl);
             mediaPlayer.setDataSource(audioUrl);
 
             mediaPlayer.setOnPreparedListener(mp -> {

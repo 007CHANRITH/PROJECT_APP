@@ -10,6 +10,7 @@ import android.view.View;
 import android.view.ViewGroup;
 import android.widget.ImageView;
 import android.widget.LinearLayout;
+import android.widget.ProgressBar;
 import android.widget.TextView;
 import android.widget.Toast;
 
@@ -218,6 +219,15 @@ public class MessageAdapter extends RecyclerView.Adapter<RecyclerView.ViewHolder
         boolean isSentByMe = msg.isSentByMe(currentUserId);
         Message.MessageType messageType = msg.getTypeEnum();
 
+        // 🔍 DEBUG LOGGING
+        if (messageType == Message.MessageType.AUDIO) {
+            Log.d(TAG, "🔍 AUDIO MESSAGE DEBUG:");
+            Log.d(TAG, "   Current User ID: " + currentUserId);
+            Log.d(TAG, "   Message Sender ID: " + msg.getSenderId());
+            Log.d(TAG, "   isSentByMe: " + isSentByMe);
+            Log.d(TAG, "   Will use ViewHolder: " + (isSentByMe ? "TYPE_AUDIO_SENT (right/purple)" : "TYPE_AUDIO_RECEIVED (left/dark)"));
+        }
+
         switch (messageType) {
             case IMAGE:
                 return isSentByMe ? TYPE_IMAGE_SENT : TYPE_IMAGE_RECEIVED;
@@ -251,25 +261,25 @@ public class MessageAdapter extends RecyclerView.Adapter<RecyclerView.ViewHolder
             case TYPE_TEXT_RECEIVED:
                 return new TextReceivedVH(inflater.inflate(R.layout.item_message_received, parent, false));
             case TYPE_IMAGE_SENT:
-                return new ImageSentVH(inflater.inflate(R.layout.item_message_sent, parent, false));
+                return new ImageSentVH(inflater.inflate(R.layout.item_message_image_sent, parent, false));
             case TYPE_IMAGE_RECEIVED:
-                return new ImageReceivedVH(inflater.inflate(R.layout.item_message_received, parent, false));
+                return new ImageReceivedVH(inflater.inflate(R.layout.item_message_image_received, parent, false));
             case TYPE_VIDEO_SENT:  // ✅ NEW
                 return new VideoSentVH(inflater.inflate(R.layout.item_message_sent, parent, false));
             case TYPE_VIDEO_RECEIVED:  // ✅ NEW
                 return new VideoReceivedVH(inflater.inflate(R.layout.item_message_received, parent, false));
             case TYPE_FILE_SENT:
-                return new FileSentVH(inflater.inflate(R.layout.item_message_sent, parent, false));
+                return new FileSentVH(inflater.inflate(R.layout.item_message_file_sent, parent, false));
             case TYPE_FILE_RECEIVED:
-                return new FileReceivedVH(inflater.inflate(R.layout.item_message_received, parent, false));
+                return new FileReceivedVH(inflater.inflate(R.layout.item_message_file_received, parent, false));
             case TYPE_AUDIO_SENT:
-                return new AudioSentVH(inflater.inflate(R.layout.item_message_voice, parent, false));
+                return new AudioSentVH(inflater.inflate(R.layout.item_message_voice_sent, parent, false));
             case TYPE_AUDIO_RECEIVED:
-                return new AudioReceivedVH(inflater.inflate(R.layout.item_message_voice, parent, false));
+                return new AudioReceivedVH(inflater.inflate(R.layout.item_message_voice_received, parent, false));
             case TYPE_LOCATION_SENT:
-                return new LocationSentVH(inflater.inflate(R.layout.item_message_sent, parent, false));
+                return new LocationSentVH(inflater.inflate(R.layout.item_message_location_sent, parent, false));
             case TYPE_LOCATION_RECEIVED:
-                return new LocationReceivedVH(inflater.inflate(R.layout.item_message_received, parent, false));
+                return new LocationReceivedVH(inflater.inflate(R.layout.item_message_location_received, parent, false));
             default:
                 return new TextSentVH(inflater.inflate(R.layout.item_message_sent, parent, false));
         }
@@ -429,25 +439,21 @@ public class MessageAdapter extends RecyclerView.Adapter<RecyclerView.ViewHolder
     class ImageSentVH extends RecyclerView.ViewHolder {
         ImageView ivImage;
         TextView tvTimeNoCaption;
-        CardView cvImageContainer;
-        LinearLayout llTextContent;
+        ProgressBar progressBar;
+        LinearLayout llCaptionContainer;
+        TextView tvCaption, tvTimeWithCaption;
 
         ImageSentVH(View view) {
             super(view);
             ivImage = view.findViewById(R.id.ivImage);
             tvTimeNoCaption = view.findViewById(R.id.tvTimeNoCaption);
-            cvImageContainer = view.findViewById(R.id.cvImageContainer);
-            llTextContent = view.findViewById(R.id.llTextContent);
+            progressBar = view.findViewById(R.id.progressBar);
+            llCaptionContainer = view.findViewById(R.id.llCaptionContainer);
+            tvCaption = view.findViewById(R.id.tvCaption);
+            tvTimeWithCaption = view.findViewById(R.id.tvTimeWithCaption);
         }
 
         void bind(Message msg, int position) {
-            if (llTextContent != null) llTextContent.setVisibility(View.GONE);
-            if (cvImageContainer != null) cvImageContainer.setVisibility(View.VISIBLE);
-            if (tvTimeNoCaption != null) {
-                tvTimeNoCaption.setText(msg.getFormattedTime());
-                tvTimeNoCaption.setVisibility(View.VISIBLE);
-            }
-
             if (ivImage == null) return;
 
             String imageUrl = msg.getFileUrl();
@@ -457,6 +463,21 @@ public class MessageAdapter extends RecyclerView.Adapter<RecyclerView.ViewHolder
             }
 
             ivImage.setVisibility(View.VISIBLE);
+
+            // Handle caption
+            String caption = msg.getContent();
+            if (caption != null && !caption.isEmpty() && llCaptionContainer != null) {
+                llCaptionContainer.setVisibility(View.VISIBLE);
+                tvCaption.setText(caption);
+                tvTimeWithCaption.setText(msg.getFormattedTime());
+                if (tvTimeNoCaption != null) tvTimeNoCaption.setVisibility(View.GONE);
+            } else {
+                if (llCaptionContainer != null) llCaptionContainer.setVisibility(View.GONE);
+                if (tvTimeNoCaption != null) {
+                    tvTimeNoCaption.setText(msg.getFormattedTime());
+                    tvTimeNoCaption.setVisibility(View.VISIBLE);
+                }
+            }
 
             try {
                 Glide.with(itemView.getContext())
@@ -493,8 +514,9 @@ public class MessageAdapter extends RecyclerView.Adapter<RecyclerView.ViewHolder
     class ImageReceivedVH extends RecyclerView.ViewHolder {
         ImageView ivAvatar, ivImage;
         TextView tvSenderName, tvTimeNoCaption;
-        CardView cvImageContainer;
-        LinearLayout llTextContent;
+        ProgressBar progressBar;
+        LinearLayout llCaptionContainer;
+        TextView tvCaption, tvTimeWithCaption;
 
         ImageReceivedVH(View view) {
             super(view);
@@ -502,18 +524,14 @@ public class MessageAdapter extends RecyclerView.Adapter<RecyclerView.ViewHolder
             ivImage = view.findViewById(R.id.ivImage);
             tvSenderName = view.findViewById(R.id.tvSenderName);
             tvTimeNoCaption = view.findViewById(R.id.tvTimeNoCaption);
-            cvImageContainer = view.findViewById(R.id.cvImageContainer);
-            llTextContent = view.findViewById(R.id.llTextContent);
+            progressBar = view.findViewById(R.id.progressBar);
+            llCaptionContainer = view.findViewById(R.id.llCaptionContainer);
+            tvCaption = view.findViewById(R.id.tvCaption);
+            tvTimeWithCaption = view.findViewById(R.id.tvTimeWithCaption);
         }
 
         void bind(Message msg, int position) {
-            if (llTextContent != null) llTextContent.setVisibility(View.GONE);
-            if (cvImageContainer != null) cvImageContainer.setVisibility(View.VISIBLE);
-            if (tvTimeNoCaption != null) {
-                tvTimeNoCaption.setText(msg.getFormattedTime());
-                tvTimeNoCaption.setVisibility(View.VISIBLE);
-            }
-
+            // Show sender name
             if (tvSenderName != null) {
                 if (msg.getSenderName() != null && !msg.getSenderName().isEmpty()) {
                     tvSenderName.setText(msg.getSenderName());
@@ -523,8 +541,10 @@ public class MessageAdapter extends RecyclerView.Adapter<RecyclerView.ViewHolder
                 }
             }
 
+            // Show avatar for group chats
             if (ivAvatar != null) {
                 if (msg.getSenderAvatarUrl() != null && !msg.getSenderAvatarUrl().isEmpty()) {
+                    ivAvatar.setVisibility(View.VISIBLE);
                     Glide.with(itemView.getContext())
                             .load(msg.getSenderAvatarUrl())
                             .circleCrop()
@@ -532,7 +552,7 @@ public class MessageAdapter extends RecyclerView.Adapter<RecyclerView.ViewHolder
                             .error(R.drawable.ic_profile)
                             .into(ivAvatar);
                 } else {
-                    ivAvatar.setImageResource(R.drawable.ic_profile);
+                    ivAvatar.setVisibility(View.GONE);
                 }
             }
 
@@ -545,6 +565,21 @@ public class MessageAdapter extends RecyclerView.Adapter<RecyclerView.ViewHolder
             }
 
             ivImage.setVisibility(View.VISIBLE);
+
+            // Handle caption
+            String caption = msg.getContent();
+            if (caption != null && !caption.isEmpty() && llCaptionContainer != null) {
+                llCaptionContainer.setVisibility(View.VISIBLE);
+                tvCaption.setText(caption);
+                tvTimeWithCaption.setText(msg.getFormattedTime());
+                if (tvTimeNoCaption != null) tvTimeNoCaption.setVisibility(View.GONE);
+            } else {
+                if (llCaptionContainer != null) llCaptionContainer.setVisibility(View.GONE);
+                if (tvTimeNoCaption != null) {
+                    tvTimeNoCaption.setText(msg.getFormattedTime());
+                    tvTimeNoCaption.setVisibility(View.VISIBLE);
+                }
+            }
 
             try {
                 Glide.with(itemView.getContext())
@@ -700,38 +735,44 @@ public class MessageAdapter extends RecyclerView.Adapter<RecyclerView.ViewHolder
     // ==================== FILE VIEW HOLDERS ====================
 
     class FileSentVH extends RecyclerView.ViewHolder {
-        TextView tvFileName, tvTime;
-        LinearLayout llTextContent;
-        CardView cvImageContainer;
+        ImageView ivFileIcon, ivDownload;
+        TextView tvFileName, tvFileSize, tvFileTime;
 
         FileSentVH(View view) {
             super(view);
-            tvFileName = view.findViewById(R.id.tvMessage);
-            tvTime = view.findViewById(R.id.tvTime);
-            llTextContent = view.findViewById(R.id.llTextContent);
-            cvImageContainer = view.findViewById(R.id.cvImageContainer);
+            ivFileIcon = view.findViewById(R.id.ivFileIcon);
+            ivDownload = view.findViewById(R.id.ivDownload);
+            tvFileName = view.findViewById(R.id.tvFileName);
+            tvFileSize = view.findViewById(R.id.tvFileSize);
+            tvFileTime = view.findViewById(R.id.tvFileTime);
         }
 
         void bind(Message msg, int position) {
-            if (cvImageContainer != null) cvImageContainer.setVisibility(View.GONE);
-            if (llTextContent != null) llTextContent.setVisibility(View.VISIBLE);
-
-            if (tvFileName == null || tvTime == null) return;
-
-            String fileName = msg.getContent();
-            if (fileName == null || fileName.isEmpty()) fileName = "Document";
-
-            if (fileName.contains("|")) {
-                String[] parts = fileName.split("\\|");
-                tvFileName.setText("👤 " + parts[0]);
-            } else {
-                tvFileName.setText("📄 " + fileName);
+            // Set file name
+            if (tvFileName != null) {
+                String fileName = msg.getContent();
+                if (fileName == null || fileName.isEmpty()) fileName = "Document";
+                tvFileName.setText(fileName);
             }
 
-            tvTime.setText(msg.getFormattedTime());
+            // Set file size (if available in message)
+            if (tvFileSize != null) {
+                // You can add file size logic here if stored in message
+                tvFileSize.setText(""); // Or hide if not available
+            }
 
+            // Set timestamp
+            if (tvFileTime != null) {
+                tvFileTime.setText(msg.getFormattedTime());
+            }
+
+            // Handle file click to open
             if (msg.getFileUrl() != null && !msg.getFileUrl().isEmpty()) {
                 itemView.setOnClickListener(v -> openDocument(itemView.getContext(), msg.getFileUrl()));
+                
+                if (ivDownload != null) {
+                    ivDownload.setOnClickListener(v -> openDocument(itemView.getContext(), msg.getFileUrl()));
+                }
             }
 
             itemView.setOnLongClickListener(v -> {
@@ -742,40 +783,23 @@ public class MessageAdapter extends RecyclerView.Adapter<RecyclerView.ViewHolder
     }
 
     class FileReceivedVH extends RecyclerView.ViewHolder {
-        ImageView ivAvatar;
-        TextView tvSenderName, tvFileName, tvTime;
-        LinearLayout llTextContent;
-        CardView cvImageContainer;
+        ImageView ivAvatar, ivFileIcon, ivDownload;
+        TextView tvSenderName, tvFileName, tvFileSize, tvFileTime;
 
         FileReceivedVH(View view) {
             super(view);
             ivAvatar = view.findViewById(R.id.ivAvatar);
+            ivFileIcon = view.findViewById(R.id.ivFileIcon);
+            ivDownload = view.findViewById(R.id.ivDownload);
             tvSenderName = view.findViewById(R.id.tvSenderName);
-            tvFileName = view.findViewById(R.id.tvMessage);
-            tvTime = view.findViewById(R.id.tvTime);
-            llTextContent = view.findViewById(R.id.llTextContent);
-            cvImageContainer = view.findViewById(R.id.cvImageContainer);
+            tvFileName = view.findViewById(R.id.tvFileName);
+            tvFileSize = view.findViewById(R.id.tvFileSize);
+            tvFileTime = view.findViewById(R.id.tvFileTime);
         }
 
         @SuppressLint("SetTextI18n")
         void bind(Message msg, int position) {
-            if (cvImageContainer != null) cvImageContainer.setVisibility(View.GONE);
-            if (llTextContent != null) llTextContent.setVisibility(View.VISIBLE);
-
-            if (tvFileName == null || tvTime == null) return;
-
-            String fileName = msg.getContent();
-            if (fileName == null || fileName.isEmpty()) fileName = "Document";
-
-            if (fileName.contains("|")) {
-                String[] parts = fileName.split("\\|");
-                tvFileName.setText("👤 " + parts[0] + "\n📱 " + parts[1]);
-            } else {
-                tvFileName.setText("📄 " + fileName);
-            }
-
-            tvTime.setText(msg.getFormattedTime());
-
+            // Show sender name
             if (tvSenderName != null) {
                 if (msg.getSenderName() != null && !msg.getSenderName().isEmpty()) {
                     tvSenderName.setText(msg.getSenderName());
@@ -785,8 +809,10 @@ public class MessageAdapter extends RecyclerView.Adapter<RecyclerView.ViewHolder
                 }
             }
 
+            // Show avatar for group chats
             if (ivAvatar != null) {
                 if (msg.getSenderAvatarUrl() != null && !msg.getSenderAvatarUrl().isEmpty()) {
+                    ivAvatar.setVisibility(View.VISIBLE);
                     Glide.with(itemView.getContext())
                             .load(msg.getSenderAvatarUrl())
                             .circleCrop()
@@ -794,12 +820,35 @@ public class MessageAdapter extends RecyclerView.Adapter<RecyclerView.ViewHolder
                             .error(R.drawable.ic_profile)
                             .into(ivAvatar);
                 } else {
-                    ivAvatar.setImageResource(R.drawable.ic_profile);
+                    ivAvatar.setVisibility(View.GONE);
                 }
             }
 
+            // Set file name
+            if (tvFileName != null) {
+                String fileName = msg.getContent();
+                if (fileName == null || fileName.isEmpty()) fileName = "Document";
+                tvFileName.setText(fileName);
+            }
+
+            // Set file size (if available in message)
+            if (tvFileSize != null) {
+                // You can add file size logic here if stored in message
+                tvFileSize.setText(""); // Or hide if not available
+            }
+
+            // Set timestamp
+            if (tvFileTime != null) {
+                tvFileTime.setText(msg.getFormattedTime());
+            }
+
+            // Handle file click to open
             if (msg.getFileUrl() != null && !msg.getFileUrl().isEmpty()) {
                 itemView.setOnClickListener(v -> openDocument(itemView.getContext(), msg.getFileUrl()));
+                
+                if (ivDownload != null) {
+                    ivDownload.setOnClickListener(v -> openDocument(itemView.getContext(), msg.getFileUrl()));
+                }
             }
 
             itemView.setOnLongClickListener(v -> {
@@ -828,6 +877,10 @@ public class MessageAdapter extends RecyclerView.Adapter<RecyclerView.ViewHolder
 
         @SuppressLint("SetTextI18n")
         void bind(Message msg, int position) {
+            Log.d(TAG, "🎵 AudioSentVH bind called for message: " + msg.getMessageId());
+            Log.d(TAG, "🎵 Audio URL: " + msg.getFileUrl());
+            Log.d(TAG, "🎵 Duration: " + msg.getDuration() + "ms");
+            
             if (tvTime != null) tvTime.setText(msg.getFormattedTime());
 
             // Set duration from message
@@ -847,10 +900,16 @@ public class MessageAdapter extends RecyclerView.Adapter<RecyclerView.ViewHolder
             if (fabPlayPause != null) {
                 fabPlayPause.setImageResource(isPlaying ? R.drawable.ic_pause : R.drawable.ic_play);
                 fabPlayPause.setOnClickListener(v -> {
+                    Log.d(TAG, "🎵 Play button clicked!");
                     if (msg.getFileUrl() != null && !msg.getFileUrl().isEmpty()) {
                         playPauseAudio(msg);
+                    } else {
+                        Log.e(TAG, "❌ File URL is null or empty!");
+                        Toast.makeText(context, "Audio file not available", Toast.LENGTH_SHORT).show();
                     }
                 });
+            } else {
+                Log.e(TAG, "❌ fabPlayPause is null!");
             }
 
             // Reset seekbar if not playing
@@ -868,7 +927,8 @@ public class MessageAdapter extends RecyclerView.Adapter<RecyclerView.ViewHolder
     class AudioReceivedVH extends RecyclerView.ViewHolder {
         FloatingActionButton fabPlayPause;
         SeekBar seekBarAudio;
-        TextView tvDuration, tvTime;
+        TextView tvDuration, tvTime, tvSenderName;
+        ImageView ivAvatar;
 
         AudioReceivedVH(View view) {
             super(view);
@@ -876,10 +936,46 @@ public class MessageAdapter extends RecyclerView.Adapter<RecyclerView.ViewHolder
             seekBarAudio = view.findViewById(R.id.seekBarAudio);
             tvDuration = view.findViewById(R.id.tvDuration);
             tvTime = view.findViewById(R.id.tvTime);
+            tvSenderName = view.findViewById(R.id.tvSenderName);
+            ivAvatar = view.findViewById(R.id.ivAvatar);
         }
 
         @SuppressLint("SetTextI18n")
         void bind(Message msg, int position) {
+            Log.d(TAG, "🎵 AudioReceivedVH bind called for message: " + msg.getMessageId());
+            Log.d(TAG, "🎵 Audio URL: " + msg.getFileUrl());
+            Log.d(TAG, "🎵 Duration: " + msg.getDuration() + "ms");
+            
+            // Show sender name
+            if (tvSenderName != null) {
+                String senderName = msg.getSenderName();
+                if (senderName != null && !senderName.isEmpty() && !"Unknown".equals(senderName)) {
+                    tvSenderName.setText(senderName);
+                    tvSenderName.setVisibility(View.VISIBLE);
+                } else {
+                    tvSenderName.setVisibility(View.GONE);
+                }
+            }
+            
+            // Show avatar for group chats
+            if (ivAvatar != null) {
+                if ("group".equals(chatType)) {
+                    ivAvatar.setVisibility(View.VISIBLE);
+                    // Load avatar with Glide if available
+                    if (msg.getSenderAvatarUrl() != null && !msg.getSenderAvatarUrl().isEmpty()) {
+                        Glide.with(context)
+                                .load(msg.getSenderAvatarUrl())
+                                .placeholder(R.drawable.ic_person)
+                                .circleCrop()
+                                .into(ivAvatar);
+                    } else {
+                        ivAvatar.setImageResource(R.drawable.ic_person);
+                    }
+                } else {
+                    ivAvatar.setVisibility(View.GONE);
+                }
+            }
+            
             if (tvTime != null) tvTime.setText(msg.getFormattedTime());
 
             // Set duration from message
@@ -899,10 +995,16 @@ public class MessageAdapter extends RecyclerView.Adapter<RecyclerView.ViewHolder
             if (fabPlayPause != null) {
                 fabPlayPause.setImageResource(isPlaying ? R.drawable.ic_pause : R.drawable.ic_play);
                 fabPlayPause.setOnClickListener(v -> {
+                    Log.d(TAG, "🎵 Play button clicked!");
                     if (msg.getFileUrl() != null && !msg.getFileUrl().isEmpty()) {
                         playPauseAudio(msg);
+                    } else {
+                        Log.e(TAG, "❌ File URL is null or empty!");
+                        Toast.makeText(context, "Audio file not available", Toast.LENGTH_SHORT).show();
                     }
                 });
+            } else {
+                Log.e(TAG, "❌ fabPlayPause is null!");
             }
 
             // Reset seekbar if not playing
@@ -922,25 +1024,25 @@ public class MessageAdapter extends RecyclerView.Adapter<RecyclerView.ViewHolder
     // ==================== LOCATION VIEW HOLDERS ====================
 
     class LocationSentVH extends RecyclerView.ViewHolder {
-        TextView tvLocation, tvTime;
-        LinearLayout llTextContent;
-        CardView cvImageContainer;
+        ImageView ivLocationMap;
+        TextView tvLocationTitle, tvLocationSubtitle, tvLocationTime;
 
         LocationSentVH(View view) {
             super(view);
-            tvLocation = view.findViewById(R.id.tvMessage);
-            tvTime = view.findViewById(R.id.tvTime);
-            llTextContent = view.findViewById(R.id.llTextContent);
-            cvImageContainer = view.findViewById(R.id.cvImageContainer);
+            ivLocationMap = view.findViewById(R.id.ivLocationMap);
+            tvLocationTitle = view.findViewById(R.id.tvLocationTitle);
+            tvLocationSubtitle = view.findViewById(R.id.tvLocationSubtitle);
+            tvLocationTime = view.findViewById(R.id.tvLocationTime);
         }
 
         @SuppressLint({"SetTextI18n", "DefaultLocale"})
         void bind(Message msg, int position) {
-            if (cvImageContainer != null) cvImageContainer.setVisibility(View.GONE);
-            if (llTextContent != null) llTextContent.setVisibility(View.VISIBLE);
+            // Set timestamp
+            if (tvLocationTime != null) {
+                tvLocationTime.setText(msg.getFormattedTime());
+            }
 
-            if (tvLocation == null || tvTime == null) return;
-
+            // Parse location coordinates
             String content = msg.getContent();
             if (content != null && content.contains(",")) {
                 String[] coords = content.split(",");
@@ -948,19 +1050,26 @@ public class MessageAdapter extends RecyclerView.Adapter<RecyclerView.ViewHolder
                     try {
                         double lat = Double.parseDouble(coords[0].trim());
                         double lon = Double.parseDouble(coords[1].trim());
-                        tvLocation.setText(String.format("📍 Location\n%.4f, %.4f", lat, lon));
+                        
+                        // Load static map image if available
+                        if (ivLocationMap != null) {
+                            String mapUrl = "https://maps.googleapis.com/maps/api/staticmap?center=" + lat + "," + lon +
+                                    "&zoom=15&size=400x300&markers=color:red%7C" + lat + "," + lon +
+                                    "&key=YOUR_API_KEY"; // TODO: Add your Google Maps API key
+                            
+                            Glide.with(itemView.getContext())
+                                    .load(mapUrl)
+                                    .placeholder(R.drawable.ic_location)
+                                    .error(R.drawable.ic_location)
+                                    .into(ivLocationMap);
+                        }
+                        
                         itemView.setOnClickListener(v -> openLocation(itemView.getContext(), lat, lon));
                     } catch (NumberFormatException e) {
-                        tvLocation.setText("📍 Location");
+                        Log.e(TAG, "Error parsing location coordinates");
                     }
-                } else {
-                    tvLocation.setText("📍 Location");
                 }
-            } else {
-                tvLocation.setText("📍 Location");
             }
-
-            tvTime.setText(msg.getFormattedTime());
 
             itemView.setOnLongClickListener(v -> {
                 deleteMessageAtPosition(position);
@@ -970,49 +1079,22 @@ public class MessageAdapter extends RecyclerView.Adapter<RecyclerView.ViewHolder
     }
 
     class LocationReceivedVH extends RecyclerView.ViewHolder {
-        ImageView ivAvatar;
-        TextView tvSenderName, tvLocation, tvTime;
-        LinearLayout llTextContent;
-        CardView cvImageContainer;
+        ImageView ivAvatar, ivLocationMap;
+        TextView tvSenderName, tvLocationTitle, tvLocationSubtitle, tvLocationTime;
 
         LocationReceivedVH(View view) {
             super(view);
             ivAvatar = view.findViewById(R.id.ivAvatar);
+            ivLocationMap = view.findViewById(R.id.ivLocationMap);
             tvSenderName = view.findViewById(R.id.tvSenderName);
-            tvLocation = view.findViewById(R.id.tvMessage);
-            tvTime = view.findViewById(R.id.tvTime);
-            llTextContent = view.findViewById(R.id.llTextContent);
-            cvImageContainer = view.findViewById(R.id.cvImageContainer);
+            tvLocationTitle = view.findViewById(R.id.tvLocationTitle);
+            tvLocationSubtitle = view.findViewById(R.id.tvLocationSubtitle);
+            tvLocationTime = view.findViewById(R.id.tvLocationTime);
         }
 
         @SuppressLint({"DefaultLocale", "SetTextI18n"})
         void bind(Message msg, int position) {
-            if (cvImageContainer != null) cvImageContainer.setVisibility(View.GONE);
-            if (llTextContent != null) llTextContent.setVisibility(View.VISIBLE);
-
-            if (tvLocation == null || tvTime == null) return;
-
-            String content = msg.getContent();
-            if (content != null && content.contains(",")) {
-                String[] coords = content.split(",");
-                if (coords.length == 2) {
-                    try {
-                        double lat = Double.parseDouble(coords[0].trim());
-                        double lon = Double.parseDouble(coords[1].trim());
-                        tvLocation.setText(String.format("📍 Location\n%.4f, %.4f", lat, lon));
-                        itemView.setOnClickListener(v -> openLocation(itemView.getContext(), lat, lon));
-                    } catch (NumberFormatException e) {
-                        tvLocation.setText("📍 Location");
-                    }
-                } else {
-                    tvLocation.setText("📍 Location");
-                }
-            } else {
-                tvLocation.setText("📍 Location");
-            }
-
-            tvTime.setText(msg.getFormattedTime());
-
+            // Show sender name
             if (tvSenderName != null) {
                 if (msg.getSenderName() != null && !msg.getSenderName().isEmpty()) {
                     tvSenderName.setText(msg.getSenderName());
@@ -1022,8 +1104,10 @@ public class MessageAdapter extends RecyclerView.Adapter<RecyclerView.ViewHolder
                 }
             }
 
+            // Show avatar for group chats
             if (ivAvatar != null) {
                 if (msg.getSenderAvatarUrl() != null && !msg.getSenderAvatarUrl().isEmpty()) {
+                    ivAvatar.setVisibility(View.VISIBLE);
                     Glide.with(itemView.getContext())
                             .load(msg.getSenderAvatarUrl())
                             .circleCrop()
@@ -1031,7 +1115,41 @@ public class MessageAdapter extends RecyclerView.Adapter<RecyclerView.ViewHolder
                             .error(R.drawable.ic_profile)
                             .into(ivAvatar);
                 } else {
-                    ivAvatar.setImageResource(R.drawable.ic_profile);
+                    ivAvatar.setVisibility(View.GONE);
+                }
+            }
+
+            // Set timestamp
+            if (tvLocationTime != null) {
+                tvLocationTime.setText(msg.getFormattedTime());
+            }
+
+            // Parse location coordinates
+            String content = msg.getContent();
+            if (content != null && content.contains(",")) {
+                String[] coords = content.split(",");
+                if (coords.length == 2) {
+                    try {
+                        double lat = Double.parseDouble(coords[0].trim());
+                        double lon = Double.parseDouble(coords[1].trim());
+                        
+                        // Load static map image if available
+                        if (ivLocationMap != null) {
+                            String mapUrl = "https://maps.googleapis.com/maps/api/staticmap?center=" + lat + "," + lon +
+                                    "&zoom=15&size=400x300&markers=color:red%7C" + lat + "," + lon +
+                                    "&key=YOUR_API_KEY"; // TODO: Add your Google Maps API key
+                            
+                            Glide.with(itemView.getContext())
+                                    .load(mapUrl)
+                                    .placeholder(R.drawable.ic_location)
+                                    .error(R.drawable.ic_location)
+                                    .into(ivLocationMap);
+                        }
+                        
+                        itemView.setOnClickListener(v -> openLocation(itemView.getContext(), lat, lon));
+                    } catch (NumberFormatException e) {
+                        Log.e(TAG, "Error parsing location coordinates");
+                    }
                 }
             }
 
@@ -1065,10 +1183,20 @@ public class MessageAdapter extends RecyclerView.Adapter<RecyclerView.ViewHolder
         String audioUrl = msg.getFileUrl();
         String messageId = msg.getMessageId();
 
-        if (messageId == null || audioUrl == null) return;
+        Log.d(TAG, "🎵 playPauseAudio called");
+        Log.d(TAG, "🎵 Audio URL: " + audioUrl);
+        Log.d(TAG, "🎵 Message ID: " + messageId);
+        Log.d(TAG, "🎵 Current playing: " + currentPlayingMessageId);
+
+        if (messageId == null || audioUrl == null) {
+            Log.e(TAG, "❌ Message ID or Audio URL is null!");
+            Toast.makeText(context, "Cannot play audio: Invalid data", Toast.LENGTH_SHORT).show();
+            return;
+        }
 
         // If already playing this audio, pause it
         if (messageId.equals(currentPlayingMessageId)) {
+            Log.d(TAG, "⏸ Pausing audio");
             audioPlayerManager.pauseAudio();
             currentPlayingMessageId = null;
             notifyDataSetChanged();
@@ -1076,13 +1204,14 @@ public class MessageAdapter extends RecyclerView.Adapter<RecyclerView.ViewHolder
         }
 
         // Stop any currently playing audio and start new one
+        Log.d(TAG, "▶ Starting audio playback");
         audioPlayerManager.stopAudio();
         currentPlayingMessageId = messageId;
 
         audioPlayerManager.playAudio(audioUrl, new AudioPlayerManager.PlaybackCallback() {
             @Override
             public void onPlaybackStarted() {
-                Log.d(TAG, "Audio playback started");
+                Log.d(TAG, "✅ Audio playback started");
                 notifyDataSetChanged();
             }
 
@@ -1093,19 +1222,30 @@ public class MessageAdapter extends RecyclerView.Adapter<RecyclerView.ViewHolder
 
             @Override
             public void onPlaybackCompleted() {
-                Log.d(TAG, "Audio playback completed");
+                Log.d(TAG, "✅ Audio playback completed");
                 currentPlayingMessageId = null;
                 notifyDataSetChanged();
             }
 
             @Override
             public void onPlaybackError(String error) {
-                Log.e(TAG, "Audio playback error: " + error);
+                Log.e(TAG, "❌ Audio playback error: " + error);
                 currentPlayingMessageId = null;
                 Toast.makeText(context, "Cannot play audio: " + error, Toast.LENGTH_SHORT).show();
                 notifyDataSetChanged();
             }
         });
+    }
+
+    // ==================== RELEASE RESOURCES ====================
+    
+    public void release() {
+        if (audioPlayerManager != null) {
+            audioPlayerManager.stopAudio();
+            audioPlayerManager = null;
+        }
+        currentPlayingMessageId = null;
+        Log.d(TAG, "MessageAdapter released");
     }
 
     private static void playAudio(Context context, String audioUrl) {

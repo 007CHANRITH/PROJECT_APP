@@ -80,24 +80,38 @@ public class AudioRecorderManager {
      * Stop recording and save file
      */
     public void stopRecording(RecordingCallback callback) {
+        Log.d(TAG, "🎤 stopRecording called");
+        Log.d(TAG, "🎤 isRecording: " + isRecording);
+        Log.d(TAG, "🎤 callback: " + (callback != null ? "NOT NULL" : "NULL"));
+        Log.d(TAG, "🎤 currentFilePath: " + currentFilePath);
+        
         if (!isRecording) {
-            Log.w(TAG, "Not recording!");
+            Log.w(TAG, "❌ Not recording!");
             return;
         }
 
         try {
             long duration = System.currentTimeMillis() - recordingStartTime;
+            Log.d(TAG, "🎤 Calculated duration: " + duration + "ms");
 
+            Log.d(TAG, "🎤 Calling mediaRecorder.stop()...");
             mediaRecorder.stop();
+            Log.d(TAG, "✅ mediaRecorder.stop() completed");
+            
             mediaRecorder.reset();
             mediaRecorder.release();
             mediaRecorder = null;
 
             isRecording = false;
 
-            Log.d(TAG, "✅ Recording stopped. Duration: " + duration + "ms");
+            Log.d(TAG, "✅ Recording stopped. Duration: " + duration + "ms, File: " + currentFilePath);
+            
             if (callback != null) {
+                Log.d(TAG, "🎤 Calling callback.onRecordingCompleted()...");
                 callback.onRecordingCompleted(currentFilePath, duration);
+                Log.d(TAG, "✅ callback.onRecordingCompleted() returned");
+            } else {
+                Log.e(TAG, "❌ Callback is NULL!");
             }
 
         } catch (Exception e) {

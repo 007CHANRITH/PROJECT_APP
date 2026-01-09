@@ -6,13 +6,14 @@
     android:layout_width="match_parent"
     android:layout_height="wrap_content"
     android:paddingTop="4dp"
-    android:paddingBottom="4dp">
+    android:paddingBottom="4dp"
+    android:paddingStart="80dp"
+    android:paddingEnd="8dp">
 
     <androidx.cardview.widget.CardView
         android:id="@+id/cvMessage"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
-        android:layout_marginStart="80dp"
         app:cardBackgroundColor="@color/message_sent"
         app:cardCornerRadius="16dp"
         app:cardElevation="2dp"
@@ -25,6 +26,7 @@
             android:orientation="vertical"
             android:maxWidth="260dp">
 
+            <!-- Map Image -->
             <androidx.cardview.widget.CardView
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
@@ -33,7 +35,7 @@
 
                 <FrameLayout
                     android:layout_width="match_parent"
-                    android:layout_height="150dp">
+                    android:layout_height="180dp">
 
                     <ImageView
                         android:id="@+id/ivMapSnapshot"
@@ -44,14 +46,16 @@
                         android:contentDescription="@string/location_message"
                         tools:src="@tools:sample/backgrounds/scenic" />
 
+                    <!-- Overlay gradient -->
                     <View
                         android:layout_width="match_parent"
                         android:layout_height="match_parent"
-                        android:background="#20000000" />
+                        android:background="@drawable/gradient_overlay" />
 
+                    <!-- Location pin icon -->
                     <ImageView
-                        android:layout_width="40dp"
-                        android:layout_height="40dp"
+                        android:layout_width="48dp"
+                        android:layout_height="48dp"
                         android:layout_gravity="center"
                         android:src="@drawable/ic_location_pin"
                         app:tint="@color/error_red"
@@ -61,10 +65,12 @@
 
             </androidx.cardview.widget.CardView>
 
+            <!-- Location Info with purple background -->
             <LinearLayout
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
                 android:orientation="vertical"
+                android:background="@color/primary_purple"
                 android:padding="12dp">
 
                 <TextView
@@ -72,7 +78,7 @@
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
                     android:text="Current Location"
-                    android:textColor="@color/text_primary"
+                    android:textColor="@android:color/white"
                     android:textSize="14sp"
                     android:fontFamily="@font/inter_semibold"
                     tools:ignore="HardcodedText" />
@@ -82,11 +88,12 @@
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
                     android:layout_marginTop="2dp"
+                    android:alpha="0.9"
                     android:ellipsize="end"
                     android:fontFamily="@font/inter_regular"
                     android:maxLines="2"
-                    android:text="123 Main St, City"
-                    android:textColor="@color/text_secondary"
+                    android:text="Tap to view location"
+                    android:textColor="#FAFAFA"
                     android:textSize="12sp"
                     tools:ignore="HardcodedText,TextContrastCheck" />
 
@@ -96,10 +103,11 @@
                     android:layout_height="wrap_content"
                     android:layout_gravity="end"
                     android:layout_marginTop="4dp"
+                    android:alpha="0.8"
                     android:fontFamily="@font/inter_regular"
                     android:text="12:30 PM"
-                    android:textColor="@color/text_tertiary"
-                    android:textSize="12sp"
+                    android:textColor="@android:color/white"
+                    android:textSize="11sp"
                     tools:ignore="HardcodedText,TextContrastCheck" />
 
             </LinearLayout>

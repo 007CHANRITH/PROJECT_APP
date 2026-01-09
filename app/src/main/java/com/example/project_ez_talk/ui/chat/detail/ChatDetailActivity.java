@@ -831,10 +831,14 @@ public class ChatDetailActivity extends BaseActivity {
 
                 @Override
                 public void onRecordingCompleted(String filePath, long durationMs) {
+                    Log.d(TAG, "🎤 onRecordingCompleted called");
+                    Log.d(TAG, "🎤 File path: " + filePath);
+                    Log.d(TAG, "🎤 Duration: " + durationMs + "ms");
                     runOnUiThread(() -> {
                         isRecording = false;
                         voiceRecordingOverlay.setVisibility(View.GONE);
                         recordingHandler.removeCallbacksAndMessages(null);
+                        Log.d(TAG, "🎤 Calling uploadVoiceMessage...");
                         uploadVoiceMessage(filePath, durationMs);
                     });
                 }
@@ -857,15 +861,24 @@ public class ChatDetailActivity extends BaseActivity {
     }
 
     private void stopVoiceRecording(boolean cancel) {
-        if (!isRecording) return;
+        Log.d(TAG, "🎤 stopVoiceRecording called, cancel=" + cancel);
+        Log.d(TAG, "🎤 isRecording=" + isRecording);
+        Log.d(TAG, "🎤 currentRecordingCallback=" + (currentRecordingCallback != null ? "NOT NULL" : "NULL"));
+        
+        if (!isRecording) {
+            Log.w(TAG, "❌ Not recording, returning");
+            return;
+        }
 
         if (cancel) {
+            Log.d(TAG, "🚫 Cancelling recording...");
             audioRecorder.cancelRecording();
             isRecording = false;
             voiceRecordingOverlay.setVisibility(View.GONE);
             recordingHandler.removeCallbacksAndMessages(null);
             Toast.makeText(this, "Recording cancelled", Toast.LENGTH_SHORT).show();
         } else {
+            Log.d(TAG, "✅ Stopping recording normally...");
             audioRecorder.stopRecording(currentRecordingCallback);
         }
     }
@@ -886,44 +899,64 @@ public class ChatDetailActivity extends BaseActivity {
     }
 
     private void uploadVoiceMessage(String filePath, long durationMs) {
+        Log.d(TAG, "📤 uploadVoiceMessage called");
+        Log.d(TAG, "📤 File path: " + filePath);
+        Log.d(TAG, "📤 Duration: " + durationMs + "ms");
+        
         File audioFile = new File(filePath);
         if (!audioFile.exists()) {
+            Log.e(TAG, "❌ Audio file not found: " + filePath);
             Toast.makeText(this, "Audio file not found", Toast.LENGTH_SHORT).show();
             return;
         }
+        
+        Log.d(TAG, "✅ Audio file exists, size: " + audioFile.length() + " bytes");
 
         // Show progress
         android.app.ProgressDialog progressDialog = new android.app.ProgressDialog(this);
         progressDialog.setMessage("Uploading voice message...");
         progressDialog.setCancelable(false);
         progressDialog.show();
+        
+        Log.d(TAG, "📤 Starting upload thread...");
 
         new Thread(() -> {
             try {
+                Log.d(TAG, "📤 Creating OkHttpClient...");
                 OkHttpClient client = new OkHttpClient();
 
+                Log.d(TAG, "📤 Reading file bytes...");
                 byte[] fileBytes = new byte[(int) audioFile.length()];
                 java.io.FileInputStream fis = new java.io.FileInputStream(audioFile);
                 fis.read(fileBytes);
                 fis.close();
+                Log.d(TAG, "✅ File read: " + fileBytes.length + " bytes");
 
                 String fileName = "voice_" + System.currentTimeMillis() + ".m4a";
+                Log.d(TAG, "📤 Uploading as: " + fileName);
+                
                 RequestBody requestBody = RequestBody.create(
                         MediaType.parse("audio/mp4"),
                         fileBytes
                 );
 
+                String uploadUrl = SUPABASE_URL + "/storage/v1/object/" + BUCKET_AUDIO + "/" + fileName;
+                Log.d(TAG, "📤 Upload URL: " + uploadUrl);
+                
                 Request request = new Request.Builder()
-                        .url(SUPABASE_URL + "/storage/v1/object/" + BUCKET_AUDIO + "/" + fileName)
+                        .url(uploadUrl)
                         .addHeader("Authorization", "Bearer " + SUPABASE_KEY)
                         .addHeader("Content-Type", "audio/mp4")
                         .post(requestBody)
                         .build();
 
+                Log.d(TAG, "📤 Executing upload request...");
                 Response response = client.newCall(request).execute();
+                Log.d(TAG, "📤 Response code: " + response.code());
 
                 if (response.isSuccessful()) {
                     String fileUrl = SUPABASE_URL + "/storage/v1/object/public/" + BUCKET_AUDIO + "/" + fileName;
+                    Log.d(TAG, "✅ Upload successful! URL: " + fileUrl);
 
                     runOnUiThread(() -> {
                         progressDialog.dismiss();
@@ -931,10 +964,12 @@ public class ChatDetailActivity extends BaseActivity {
                         audioFile.delete();
                     });
                 } else {
+                    String errorBody = response.body() != null ? response.body().string() : "No error body";
+                    Log.e(TAG, "❌ Upload failed: " + response.code() + " - " + errorBody);
                     throw new Exception("Upload failed: " + response.code());
                 }
             } catch (Exception e) {
-                Log.e(TAG, "Upload error", e);
+                Log.e(TAG, "❌ Upload exception: " + e.getMessage(), e);
                 runOnUiThread(() -> {
                     progressDialog.dismiss();
                     Toast.makeText(ChatDetailActivity.this, "Upload failed: " + e.getMessage(), Toast.LENGTH_SHORT).show();
@@ -945,21 +980,36 @@ public class ChatDetailActivity extends BaseActivity {
     }
 
     private void sendAudioMessage(String audioUrl, long durationMs) {
+        Log.d(TAG, "📤 sendAudioMessage called");
+        Log.d(TAG, "📤 Audio URL: " + audioUrl);
+        Log.d(TAG, "📤 Duration: " + durationMs + "ms");
+        
+        // 🔍 DEBUG: Log user IDs
+        Log.d(TAG, "🔍 SENDER DEBUG:");
+        Log.d(TAG, "   Current User ID (sender): " + currentUser.getUid());
+        Log.d(TAG, "   Receiver ID: " + receiverId);
+        Log.d(TAG, "   Current User Name: " + currentUserName);
+        
         Message message = new Message(
                 currentUser.getUid(),
                 receiverId,
-                audioUrl,
+                "🎤 Voice message",  // Content/text
                 Message.MessageType.AUDIO
         );
 
+        message.setFileUrl(audioUrl);  // ✅ THIS WAS MISSING!
         message.setSenderName(currentUserName);
         message.setSenderAvatarUrl(currentUserAvatar);
         message.setTimestamp(System.currentTimeMillis());
         message.setDuration(durationMs);
 
+        Log.d(TAG, "💾 Saving voice message to Firestore with URL: " + audioUrl);
+        Log.d(TAG, "💾 Message senderId: " + message.getSenderId());
+        Log.d(TAG, "💾 Message groupId (receiverId): " + message.getGroupId());
+
         messagesRef.add(message)
                 .addOnSuccessListener(ref -> {
-                    Log.d(TAG, "✅ Voice message sent");
+                    Log.d(TAG, "✅ Voice message sent successfully!");
                     updateChatListBothUsers("🎤 Voice message");
 
                     MessageNotificationManager.sendMessageNotification(
@@ -971,7 +1021,7 @@ public class ChatDetailActivity extends BaseActivity {
                     );
                 })
                 .addOnFailureListener(e -> {
-                    Log.e(TAG, "Failed to send voice message: " + e.getMessage());
+                    Log.e(TAG, "❌ Failed to send voice message: " + e.getMessage());
                     Toast.makeText(this, "Failed to send voice message", Toast.LENGTH_SHORT).show();
                 });
     }
@@ -1629,6 +1679,12 @@ public class ChatDetailActivity extends BaseActivity {
         if (firebaseSignaling != null) {
             firebaseSignaling.removeListener();
             Log.d(TAG, "Firebase Signaling listener removed");
+        }
+        
+        // Release audio player resources
+        if (messageAdapter != null) {
+            messageAdapter.release();
+            Log.d(TAG, "MessageAdapter released");
         }
     }
 

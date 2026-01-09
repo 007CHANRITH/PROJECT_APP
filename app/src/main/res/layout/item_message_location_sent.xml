@@ -1,0 +1,105 @@
+<?xml version="1.0" encoding="utf-8"?>
+<androidx.constraintlayout.widget.ConstraintLayout
+    xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    xmlns:tools="http://schemas.android.com/tools"
+    android:layout_width="match_parent"
+    android:layout_height="wrap_content"
+    android:paddingStart="80dp"
+    android:paddingEnd="8dp"
+    android:paddingTop="4dp"
+    android:paddingBottom="4dp">
+
+    <!-- Location Card -->
+    <androidx.cardview.widget.CardView
+        android:id="@+id/cvLocation"
+        android:layout_width="0dp"
+        android:layout_height="wrap_content"
+        app:cardBackgroundColor="@color/message_sent"
+        app:cardCornerRadius="16dp"
+        app:cardElevation="2dp"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintTop_toTopOf="parent">
+
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:orientation="vertical">
+
+            <!-- Map Image -->
+            <FrameLayout
+                android:layout_width="match_parent"
+                android:layout_height="180dp"
+                android:layout_margin="8dp">
+
+                <ImageView
+                    android:id="@+id/ivLocationMap"
+                    android:layout_width="match_parent"
+                    android:layout_height="match_parent"
+                    android:scaleType="centerCrop"
+                    android:contentDescription="@string/location"
+                    android:background="@color/background_secondary"
+                    tools:src="@tools:sample/backgrounds/scenic" />
+
+                <!-- Gradient overlay -->
+                <View
+                    android:layout_width="match_parent"
+                    android:layout_height="80dp"
+                    android:layout_gravity="bottom"
+                    android:background="@drawable/gradient_bottom" />
+
+                <!-- Location Pin Icon -->
+                <ImageView
+                    android:layout_width="48dp"
+                    android:layout_height="48dp"
+                    android:layout_gravity="center"
+                    android:src="@drawable/ic_location"
+                    android:contentDescription="@string/location"
+                    app:tint="@android:color/white" />
+            </FrameLayout>
+
+            <!-- Purple info section -->
+            <LinearLayout
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:orientation="vertical"
+                android:background="@color/primary_purple"
+                android:padding="12dp">
+
+                <TextView
+                    android:id="@+id/tvLocationTitle"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:text="@string/current_location"
+                    android:textColor="@android:color/white"
+                    android:textSize="14sp"
+                    android:textStyle="bold"
+                    android:fontFamily="@font/inter_semibold" />
+
+                <TextView
+                    android:id="@+id/tvLocationSubtitle"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:layout_marginTop="2dp"
+                    android:text="@string/tap_to_view_location"
+                    android:textColor="@android:color/white"
+                    android:textSize="12sp"
+                    android:fontFamily="@font/inter_regular" />
+
+                <TextView
+                    android:id="@+id/tvLocationTime"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:layout_marginTop="4dp"
+                    android:layout_gravity="end"
+                    android:text="12:30 PM"
+                    android:textColor="@android:color/white"
+                    android:textSize="11sp"
+                    android:fontFamily="@font/inter_regular"
+                    tools:ignore="HardcodedText" />
+            </LinearLayout>
+        </LinearLayout>
+    </androidx.cardview.widget.CardView>
+
+</androidx.constraintlayout.widget.ConstraintLayout>

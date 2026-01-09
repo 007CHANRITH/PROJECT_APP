@@ -226,8 +226,11 @@
     <string name="video_message">Video message</string>
     <string name="location">Location</string>
     <string name="location_message">Location message</string>
+    <string name="current_location">Current Location</string>
+    <string name="tap_to_view_location">Tap to view location</string>
     <string name="image_message">Image</string>
     <string name="file_attachment">File</string>
+    <string name="file">File</string>
     <string name="contact">Contact</string>
     <string name="share_content">Share content</string>
     <string name="toggle_video">Video on/off</string>
