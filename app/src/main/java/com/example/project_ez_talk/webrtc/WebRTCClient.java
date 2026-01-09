@@ -464,9 +464,40 @@ public class WebRTCClient {
         return peerConnectionFactory;
     }
 
-    // Placeholder methods
-    public void switchCamera() {}
-    public void toggleVideo(Boolean shouldBeOn) {}
+    /**
+     * ✅ Initialize local video view for rendering
+     */
+    public void initLocalView(Object localView) {
+        Log.d(TAG, "📱 Initializing local view...");
+        // SurfaceViewRenderer binding handled by MainRepository
+    }
+
+    /**
+     * ✅ Initialize remote video view for rendering
+     */
+    public void initRemoteView(Object remoteView) {
+        Log.d(TAG, "📱 Initializing remote view...");
+        // SurfaceViewRenderer binding handled by MainRepository
+    }
+
+    /**
+     * ✅ Switch camera (front/back) - Currently not implemented
+     */
+    public void switchCamera() {
+        Log.d(TAG, "📷 Camera switch requested (not yet implemented)");
+    }
+
+    /**
+     * ✅ Toggle video on/off
+     */
+    public void toggleVideo(Boolean shouldBeOn) {
+        if (videoTrack != null) {
+            videoTrack.setEnabled(shouldBeOn);
+            Log.d(TAG, "📹 Video toggled: " + (shouldBeOn ? "ON" : "OFF"));
+        } else {
+            Log.w(TAG, "⚠️ Video track not available");
+        }
+    }
 
     public interface Listener {}
 }

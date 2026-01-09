@@ -8,6 +8,9 @@ import java.text.SimpleDateFormat;
 import java.util.Date;
 import java.util.Locale;
 
+/**
+ * ✅ COMPLETE Message model with VIDEO + AUDIO support
+ */
 public class Message {
 
     public enum MessageType {
@@ -18,7 +21,7 @@ public class Message {
     private String senderId;
     private String groupId;
     private String content;
-    private String text; // Alternative field for content
+    private String text;
     private String fileUrl;
     private String messageType = "TEXT";
     private long timestamp;
@@ -133,48 +136,18 @@ public class Message {
         isDeleted = deleted;
     }
 
-    // ==================== ✅ ADD THESE TO SUPPRESS WARNINGS ====================
+    // ==================== SUPPRESS FIRESTORE WARNINGS ====================
 
-    // Firestore might have these fields - add dummy setters to suppress warnings
-    public void setTextMessage(String textMessage) {
-        // Ignore - this is just to suppress Firestore warnings
-    }
-
-    public void setVideoMessage(String videoMessage) {
-        // Ignore - this is just to suppress Firestore warnings
-    }
-
-    public void setAudioMessage(String audioMessage) {
-        // Ignore - this is just to suppress Firestore warnings
-    }
-
-    public void setImageMessage(String imageMessage) {
-        // Ignore - this is just to suppress Firestore warnings
-    }
-
-    public void setLocationMessage(String locationMessage) {
-        // Ignore - this is just to suppress Firestore warnings
-    }
-
-    public void setFileMessage(String fileMessage) {
-        // Ignore - this is just to suppress Firestore warnings
-    }
-
-    public void setType(String type) {
-        // Ignore - we use messageType instead
-    }
-
-    public void setReceiverId(String receiverId) {
-        // Ignore - we use groupId instead
-    }
-
-    public void setThumbnailUrl(String thumbnailUrl) {
-        // Ignore - optional field
-    }
-
-    public void setStatus(String status) {
-        // Ignore - optional field
-    }
+    public void setTextMessage(String textMessage) {}
+    public void setVideoMessage(String videoMessage) {}
+    public void setAudioMessage(String audioMessage) {}
+    public void setImageMessage(String imageMessage) {}
+    public void setLocationMessage(String locationMessage) {}
+    public void setFileMessage(String fileMessage) {}
+    public void setType(String type) {}
+    public void setReceiverId(String receiverId) {}
+    public void setThumbnailUrl(String thumbnailUrl) {}
+    public void setStatus(String status) {}
 
     // ==================== UTILITY METHODS ====================
 
@@ -240,15 +213,47 @@ public class Message {
                 return "Image";
             case AUDIO:
                 return "Audio";
+            case VIDEO:
+                return "Video";
             case FILE:
                 return "File";
             case LOCATION:
                 return "Location";
-            case VIDEO:
-                return "Video";
             case TEXT:
             default:
                 return "Text";
+        }
+    }
+
+    /**
+     * ✅ Check if message is a media type
+     */
+    @Exclude
+    public boolean isMediaMessage() {
+        MessageType type = getTypeEnum();
+        return type == MessageType.IMAGE || type == MessageType.VIDEO ||
+                type == MessageType.AUDIO || type == MessageType.FILE;
+    }
+
+    /**
+     * ✅ Get appropriate emoji for message type
+     */
+    @Exclude
+    public String getMessageEmoji() {
+        switch (getTypeEnum()) {
+            case IMAGE:
+                return "🖼️";
+            case AUDIO:
+                return "🎵";
+            case VIDEO:
+                return "🎬";
+            case FILE:
+                return "📄";
+            case LOCATION:
+                return "📍";
+            case TEXT:
+            default:
+                return "💬";
         }
     }
 

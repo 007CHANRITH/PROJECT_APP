@@ -1,66 +1,51 @@
 package com.example.project_ez_talk.ui;
 
-import android.content.Context;
 import android.os.Bundle;
 import android.util.Log;
 
 import androidx.appcompat.app.AppCompatActivity;
 
-import com.example.project_ez_talk.helper.LocaleHelper;
-import com.example.project_ez_talk.helper.NotificationHelper;
-
 /**
- * BaseActivity - Base class for all activities
- * Automatically applies saved language preference
- * Automatically initializes FCM for push notifications
- *
- * All your activities should extend this instead of AppCompatActivity
- *
- * Example:
- * public class HomeActivity extends BaseActivity {
- *     // Your code here
- * }
+ * ✅ Base Activity class
+ * Provides common functionality for all activities
  */
 public class BaseActivity extends AppCompatActivity {
 
-    private static final String TAG = "BaseActivity";
-
-    @Override
-    protected void attachBaseContext(Context newBase) {
-        super.attachBaseContext(LocaleHelper.setLocale(newBase));
-    }
+    protected static final String TAG = "BaseActivity";
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
+        Log.d(TAG, "onCreate: " + this.getClass().getSimpleName());
+    }
 
-        // ==================== FCM INITIALIZATION ====================
-        // Initialize Firebase Cloud Messaging
-        // This will:
-        // 1. Get device FCM token
-        // 2. Save token to Firestore (for push notifications)
-        // 3. Request notification permission (Android 13+)
-        Log.d(TAG, "🔄 Initializing FCM for push notifications...");
-        NotificationHelper.initializeFCM(this);
-        NotificationHelper.requestNotificationPermission(this);
-        // ==================== END FCM INITIALIZATION ====================
+    @Override
+    protected void onStart() {
+        super.onStart();
+        Log.d(TAG, "onStart: " + this.getClass().getSimpleName());
     }
 
     @Override
     protected void onResume() {
         super.onResume();
-        // Common resume logic
+        Log.d(TAG, "onResume: " + this.getClass().getSimpleName());
     }
 
     @Override
     protected void onPause() {
         super.onPause();
-        // Common pause logic
+        Log.d(TAG, "onPause: " + this.getClass().getSimpleName());
+    }
+
+    @Override
+    protected void onStop() {
+        super.onStop();
+        Log.d(TAG, "onStop: " + this.getClass().getSimpleName());
     }
 
     @Override
     protected void onDestroy() {
         super.onDestroy();
-        // Common cleanup
+        Log.d(TAG, "onDestroy: " + this.getClass().getSimpleName());
     }
 }

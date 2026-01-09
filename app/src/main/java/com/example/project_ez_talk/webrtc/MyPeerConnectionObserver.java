@@ -2,6 +2,7 @@ package com.example.project_ez_talk.webrtc;
 
 import android.util.Log;
 
+import org.webrtc.AudioTrack;
 import org.webrtc.DataChannel;
 import org.webrtc.IceCandidate;
 import org.webrtc.MediaStream;
@@ -9,8 +10,8 @@ import org.webrtc.PeerConnection;
 import org.webrtc.RtpReceiver;
 
 /**
- * ✅ Enhanced Observer for PeerConnection events
- * Handles ICE candidates, audio streams, and connection state changes
+ * ✅ FIXED Observer - NOW HANDLES onAddTrack PROPERLY
+ * This is called when REMOTE audio/video tracks arrive
  */
 public class MyPeerConnectionObserver implements PeerConnection.Observer {
 
@@ -41,7 +42,6 @@ public class MyPeerConnectionObserver implements PeerConnection.Observer {
             callback.onIceConnectionStateChange(iceConnectionState);
         }
 
-        // Log specific states
         switch (iceConnectionState) {
             case NEW:
                 Log.d(TAG, "   ℹ️ ICE gathering starting...");
@@ -84,6 +84,7 @@ public class MyPeerConnectionObserver implements PeerConnection.Observer {
             callback.onIceCandidate(iceCandidate);
         }
     }
+
     @Override
     public void onIceCandidatesRemoved(IceCandidate[] iceCandidates) {
         Log.d(TAG, "🗑️ ICE Candidates Removed: " + iceCandidates.length);
@@ -91,9 +92,17 @@ public class MyPeerConnectionObserver implements PeerConnection.Observer {
 
     @Override
     public void onAddStream(MediaStream mediaStream) {
-        Log.d(TAG, "🔊 Remote Stream Added!");
+        Log.d(TAG, "🔊 Remote Stream Added (OLD API)!");
         Log.d(TAG, "   Audio Tracks: " + mediaStream.audioTracks.size());
         Log.d(TAG, "   Video Tracks: " + mediaStream.videoTracks.size());
+
+        // ✅ ENABLE ALL AUDIO TRACKS
+        if (mediaStream.audioTracks.size() > 0) {
+            for (AudioTrack audioTrack : mediaStream.audioTracks) {
+                audioTrack.setEnabled(true);
+                Log.d(TAG, "✅✅✅ Audio track ENABLED from onAddStream!");
+            }
+        }
 
         if (callback != null) {
             callback.onMediaStreamAdded(mediaStream);
@@ -115,13 +124,37 @@ public class MyPeerConnectionObserver implements PeerConnection.Observer {
         Log.d(TAG, "🔄 Renegotiation Needed");
     }
 
+    /**
+     * ✅ THIS IS THE KEY FIX!
+     * onAddTrack is called when REMOTE audio/video arrives (Unified Plan SDP)
+     */
     @Override
     public void onAddTrack(RtpReceiver rtpReceiver, MediaStream[] mediaStreams) {
         Log.d(TAG, "🎵 RTP Track Added!");
-        Log.d(TAG, "   Track: " + rtpReceiver.track().kind());
+
+        String trackKind = rtpReceiver.track().kind();
+        Log.d(TAG, "   Track Type: " + trackKind);
         Log.d(TAG, "   Streams: " + mediaStreams.length);
 
-        // Notify callback about media stream
+        // ✅ ENABLE AUDIO TRACKS WHEN THEY ARRIVE
+        if ("audio".equals(trackKind)) {
+            Log.d(TAG, "🔊 REMOTE AUDIO TRACK RECEIVED!");
+            try {
+                Object trackObj = rtpReceiver.track();
+                if (trackObj instanceof AudioTrack) {
+                    AudioTrack audioTrack = (AudioTrack) trackObj;
+                    audioTrack.setEnabled(true);
+                    Log.d(TAG, "✅✅✅ AUDIO ENABLED - SOUND SHOULD PLAY NOW!");
+                }
+            } catch (Exception e) {
+                Log.e(TAG, "❌ Error enabling audio: " + e.getMessage(), e);
+            }
+        }
+
+        if ("video".equals(trackKind)) {
+            Log.d(TAG, "📹 REMOTE VIDEO TRACK RECEIVED!");
+        }
+
         if (mediaStreams.length > 0 && callback != null) {
             callback.onMediaStreamAdded(mediaStreams[0]);
         }

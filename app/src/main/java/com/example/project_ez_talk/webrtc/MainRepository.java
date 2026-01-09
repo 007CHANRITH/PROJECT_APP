@@ -3,6 +3,7 @@ package com.example.project_ez_talk.webrtc;
 import android.content.Context;
 import android.util.Log;
 
+
 import com.google.gson.Gson;
 
 import org.webrtc.IceCandidate;
@@ -32,7 +33,7 @@ public class MainRepository {
     // ✅ NEW: Track initialization state and pending offer
     private boolean isInitialized = false;
     private DataModel pendingOffer = null;
-
+    private Context context;  // ← ADD THIS
     public RepositoryListener repositoryListener;
     private Object callBack;
 

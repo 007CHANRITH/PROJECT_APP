@@ -26,6 +26,9 @@ import com.google.firebase.firestore.FirebaseFirestore;
 import java.util.ArrayList;
 import java.util.List;
 
+/**
+ * ✅ COMPLETE MessageAdapter with VIDEO + AUDIO support
+ */
 public class MessageAdapter extends RecyclerView.Adapter<RecyclerView.ViewHolder> {
 
     private static final String TAG = "MessageAdapter";
@@ -36,10 +39,9 @@ public class MessageAdapter extends RecyclerView.Adapter<RecyclerView.ViewHolder
 
     // ==================== FOR SWIPE DELETE ====================
     private final FirebaseFirestore db;
-    private String currentChatId; // groupId or chatId
-    private String chatType = "group"; // "group" or "private"
+    private String currentChatId;
+    private String chatType = "group";
 
-    // ✅ NEW: Track messages being deleted to prevent race conditions
     private final List<String> deletingMessageIds = new ArrayList<>();
 
     // Callback for delete operations
@@ -49,7 +51,7 @@ public class MessageAdapter extends RecyclerView.Adapter<RecyclerView.ViewHolder
 
     private MessageDeleteListener deleteListener;
 
-    // View types
+    // ==================== VIEW TYPES ====================
     private static final int TYPE_TEXT_SENT = 1;
     private static final int TYPE_TEXT_RECEIVED = 2;
     private static final int TYPE_IMAGE_SENT = 3;
@@ -60,6 +62,8 @@ public class MessageAdapter extends RecyclerView.Adapter<RecyclerView.ViewHolder
     private static final int TYPE_AUDIO_RECEIVED = 8;
     private static final int TYPE_LOCATION_SENT = 9;
     private static final int TYPE_LOCATION_RECEIVED = 10;
+    private static final int TYPE_VIDEO_SENT = 11;  // ✅ NEW
+    private static final int TYPE_VIDEO_RECEIVED = 12;  // ✅ NEW
 
     // ==================== CONSTRUCTORS ====================
 
@@ -71,14 +75,14 @@ public class MessageAdapter extends RecyclerView.Adapter<RecyclerView.ViewHolder
         this.db = FirebaseFirestore.getInstance();
     }
 
-    // ==================== SETTERS FOR SWIPE DELETE ====================
+    // ==================== SETTERS ====================
     public void setCurrentChatId(String chatId) {
         this.currentChatId = chatId;
         Log.d(TAG, "Chat ID set to: " + chatId);
     }
 
     public void setChatType(String type) {
-        this.chatType = type; // "group" or "private"
+        this.chatType = type;
         Log.d(TAG, "Chat type set to: " + type);
     }
 
@@ -86,24 +90,19 @@ public class MessageAdapter extends RecyclerView.Adapter<RecyclerView.ViewHolder
         this.deleteListener = listener;
     }
 
-    /**
-     * Get the messages list (needed by SwipeToDeleteCallback)
-     */
     public List<Message> getMessages() {
         return messages;
     }
 
-    // ==================== ✅ FIXED DELETE MESSAGE AT POSITION ====================
+    // ==================== DELETE MESSAGE ====================
     public void deleteMessageAtPosition(int position) {
         Log.d(TAG, "🗑️ deleteMessageAtPosition called at position: " + position);
 
-        // ✅ Validate position
         if (position < 0 || position >= messages.size()) {
-            Log.e(TAG, "❌ Invalid position: " + position + ", messages size: " + messages.size());
+            Log.e(TAG, "❌ Invalid position: " + position);
             return;
         }
 
-        // Get the message
         Message message = messages.get(position);
 
         if (message == null) {
@@ -111,25 +110,16 @@ public class MessageAdapter extends RecyclerView.Adapter<RecyclerView.ViewHolder
             return;
         }
 
-        // ✅ Check if message is already being deleted
         if (deletingMessageIds.contains(message.getMessageId())) {
             Log.w(TAG, "⚠️ Message is already being deleted: " + message.getMessageId());
             return;
         }
 
-        Log.d(TAG, "📝 Message ID: " + message.getMessageId());
-        Log.d(TAG, "📝 Current Chat ID: " + currentChatId);
-        Log.d(TAG, "📝 Sender ID: " + message.getSenderId());
-        Log.d(TAG, "📝 Current User ID: " + currentUserId);
-
-        // ✅ Check if user can delete (must be sender)
         if (!message.isSentByMe(currentUserId)) {
             Toast.makeText(context, "You can only delete your own messages", Toast.LENGTH_SHORT).show();
-            Log.w(TAG, "⚠️ User attempted to delete message not sent by them");
             return;
         }
 
-        // ✅ Validate message ID and chat ID
         if (message.getMessageId() == null || message.getMessageId().isEmpty()) {
             Log.e(TAG, "❌ Message ID is null or empty");
             Toast.makeText(context, "Cannot delete message (invalid ID)", Toast.LENGTH_SHORT).show();
@@ -142,14 +132,10 @@ public class MessageAdapter extends RecyclerView.Adapter<RecyclerView.ViewHolder
             return;
         }
 
-        // ✅ Mark message as being deleted
         deletingMessageIds.add(message.getMessageId());
-
-        // ✅ Show confirmation toast
         Toast.makeText(context, "Deleting message...", Toast.LENGTH_SHORT).show();
 
         // ==================== DELETE FROM FIRESTORE ====================
-        // Determine collection path based on chat type
         String collectionPath;
         if ("private".equals(chatType)) {
             collectionPath = "chats";
@@ -167,13 +153,8 @@ public class MessageAdapter extends RecyclerView.Adapter<RecyclerView.ViewHolder
                 .addOnSuccessListener(unused -> {
                     Log.d(TAG, "✅ Message successfully deleted from Firestore: " + message.getMessageId());
 
-                    // ✅ IMPORTANT: Don't manually remove from list here!
-                    // The Firestore listener will automatically update the list
-
-                    // Remove from deleting list
                     deletingMessageIds.remove(message.getMessageId());
 
-                    // Notify listeners
                     if (deleteListener != null) {
                         deleteListener.onMessageDeleted(message);
                     }
@@ -182,25 +163,20 @@ public class MessageAdapter extends RecyclerView.Adapter<RecyclerView.ViewHolder
                 })
                 .addOnFailureListener(e -> {
                     Log.e(TAG, "❌ Failed to delete message: " + e.getMessage());
-
-                    // Remove from deleting list on failure
                     deletingMessageIds.remove(message.getMessageId());
-
                     Toast.makeText(context, "Failed to delete: " + e.getMessage(), Toast.LENGTH_SHORT).show();
                 });
     }
 
-    // ==================== ✅ FIXED SET MESSAGES METHOD ====================
+    // ==================== SET MESSAGES ====================
     public void setMessages(List<Message> newMessages) {
         if (newMessages == null) {
             newMessages = new ArrayList<>();
         }
 
-        // ✅ Clear the messages list and add all new messages
         messages.clear();
         messages.addAll(newMessages);
 
-        // ✅ Clean up deletingMessageIds list (remove any IDs that are no longer in messages)
         List<String> currentMessageIds = new ArrayList<>();
         for (Message msg : messages) {
             if (msg != null && msg.getMessageId() != null) {
@@ -219,6 +195,7 @@ public class MessageAdapter extends RecyclerView.Adapter<RecyclerView.ViewHolder
         }
     }
 
+    // ==================== GET ITEM VIEW TYPE ====================
     @Override
     public int getItemViewType(int position) {
         if (position < 0 || position >= messages.size()) {
@@ -236,20 +213,21 @@ public class MessageAdapter extends RecyclerView.Adapter<RecyclerView.ViewHolder
         switch (messageType) {
             case IMAGE:
                 return isSentByMe ? TYPE_IMAGE_SENT : TYPE_IMAGE_RECEIVED;
+            case VIDEO:  // ✅ NEW
+                return isSentByMe ? TYPE_VIDEO_SENT : TYPE_VIDEO_RECEIVED;
             case AUDIO:
                 return isSentByMe ? TYPE_AUDIO_SENT : TYPE_AUDIO_RECEIVED;
             case FILE:
                 return isSentByMe ? TYPE_FILE_SENT : TYPE_FILE_RECEIVED;
             case LOCATION:
                 return isSentByMe ? TYPE_LOCATION_SENT : TYPE_LOCATION_RECEIVED;
-            case VIDEO:
-                return isSentByMe ? TYPE_IMAGE_SENT : TYPE_IMAGE_RECEIVED;
             default:
             case TEXT:
                 return isSentByMe ? TYPE_TEXT_SENT : TYPE_TEXT_RECEIVED;
         }
     }
 
+    // ==================== CREATE VIEW HOLDER ====================
     @NonNull
     @Override
     public RecyclerView.ViewHolder onCreateViewHolder(@NonNull ViewGroup parent, int viewType) {
@@ -268,6 +246,10 @@ public class MessageAdapter extends RecyclerView.Adapter<RecyclerView.ViewHolder
                 return new ImageSentVH(inflater.inflate(R.layout.item_message_sent, parent, false));
             case TYPE_IMAGE_RECEIVED:
                 return new ImageReceivedVH(inflater.inflate(R.layout.item_message_received, parent, false));
+            case TYPE_VIDEO_SENT:  // ✅ NEW
+                return new VideoSentVH(inflater.inflate(R.layout.item_message_sent, parent, false));
+            case TYPE_VIDEO_RECEIVED:  // ✅ NEW
+                return new VideoReceivedVH(inflater.inflate(R.layout.item_message_received, parent, false));
             case TYPE_FILE_SENT:
                 return new FileSentVH(inflater.inflate(R.layout.item_message_sent, parent, false));
             case TYPE_FILE_RECEIVED:
@@ -285,6 +267,7 @@ public class MessageAdapter extends RecyclerView.Adapter<RecyclerView.ViewHolder
         }
     }
 
+    // ==================== BIND VIEW HOLDER ====================
     @Override
     public void onBindViewHolder(@NonNull RecyclerView.ViewHolder holder, int position) {
         if (position < 0 || position >= messages.size()) {
@@ -306,6 +289,10 @@ public class MessageAdapter extends RecyclerView.Adapter<RecyclerView.ViewHolder
             ((ImageSentVH) holder).bind(msg, position);
         } else if (holder instanceof ImageReceivedVH) {
             ((ImageReceivedVH) holder).bind(msg, position);
+        } else if (holder instanceof VideoSentVH) {  // ✅ NEW
+            ((VideoSentVH) holder).bind(msg, position);
+        } else if (holder instanceof VideoReceivedVH) {  // ✅ NEW
+            ((VideoReceivedVH) holder).bind(msg, position);
         } else if (holder instanceof FileSentVH) {
             ((FileSentVH) holder).bind(msg, position);
         } else if (holder instanceof FileReceivedVH) {
@@ -326,8 +313,7 @@ public class MessageAdapter extends RecyclerView.Adapter<RecyclerView.ViewHolder
         return messages.size();
     }
 
-    // ==================== VIEW HOLDERS ====================
-    // (All ViewHolder classes remain the same as before)
+    // ==================== TEXT VIEW HOLDERS ====================
 
     class TextSentVH extends RecyclerView.ViewHolder {
         TextView tvMessage, tvTime;
@@ -429,6 +415,8 @@ public class MessageAdapter extends RecyclerView.Adapter<RecyclerView.ViewHolder
             });
         }
     }
+
+    // ==================== IMAGE VIEW HOLDERS ====================
 
     class ImageSentVH extends RecyclerView.ViewHolder {
         ImageView ivImage;
@@ -584,8 +572,124 @@ public class MessageAdapter extends RecyclerView.Adapter<RecyclerView.ViewHolder
         }
     }
 
-    // ... (Continue with remaining ViewHolders - FileSentVH, FileReceivedVH, etc.)
-    // They all follow the same pattern as above with proper null checks and position handling
+    // ==================== ✅ VIDEO VIEW HOLDERS ====================
+
+    class VideoSentVH extends RecyclerView.ViewHolder {
+        TextView tvDuration, tvTime;
+        LinearLayout llTextContent;
+        CardView cvImageContainer;
+
+        VideoSentVH(View view) {
+            super(view);
+            tvDuration = view.findViewById(R.id.tvMessage);
+            tvTime = view.findViewById(R.id.tvTime);
+            llTextContent = view.findViewById(R.id.llTextContent);
+            cvImageContainer = view.findViewById(R.id.cvImageContainer);
+        }
+
+        void bind(Message msg, int position) {
+            if (cvImageContainer != null) cvImageContainer.setVisibility(View.GONE);
+            if (llTextContent != null) llTextContent.setVisibility(View.VISIBLE);
+
+            if (tvDuration != null) tvDuration.setText("🎬 Video");
+            if (tvTime != null) tvTime.setText(msg.getFormattedTime());
+
+            String videoUrl = msg.getFileUrl();
+            if (videoUrl != null && !videoUrl.isEmpty()) {
+                itemView.setOnClickListener(v -> {
+                    try {
+                        Intent intent = new Intent(itemView.getContext(), com.example.project_ez_talk.ui.media.VideoPlayerActivity.class);
+                        intent.putExtra("video_url", videoUrl);
+                        intent.putExtra("sender_name", "You");
+                        intent.putExtra("timestamp", msg.getFormattedTime());
+                        intent.putExtra("caption", msg.getContent());
+                        itemView.getContext().startActivity(intent);
+                    } catch (Exception e) {
+                        Log.e(TAG, "Error opening video player: " + e.getMessage());
+                        Toast.makeText(itemView.getContext(), "Cannot open video", Toast.LENGTH_SHORT).show();
+                    }
+                });
+            }
+
+            itemView.setOnLongClickListener(v -> {
+                deleteMessageAtPosition(position);
+                return true;
+            });
+        }
+    }
+
+    class VideoReceivedVH extends RecyclerView.ViewHolder {
+        ImageView ivAvatar;
+        TextView tvSenderName, tvDuration, tvTime;
+        LinearLayout llTextContent;
+        CardView cvImageContainer;
+
+        VideoReceivedVH(View view) {
+            super(view);
+            ivAvatar = view.findViewById(R.id.ivAvatar);
+            tvSenderName = view.findViewById(R.id.tvSenderName);
+            tvDuration = view.findViewById(R.id.tvMessage);
+            tvTime = view.findViewById(R.id.tvTime);
+            llTextContent = view.findViewById(R.id.llTextContent);
+            cvImageContainer = view.findViewById(R.id.cvImageContainer);
+        }
+
+        void bind(Message msg, int position) {
+            if (cvImageContainer != null) cvImageContainer.setVisibility(View.GONE);
+            if (llTextContent != null) llTextContent.setVisibility(View.VISIBLE);
+
+            if (tvSenderName != null) {
+                if (msg.getSenderName() != null && !msg.getSenderName().isEmpty()) {
+                    tvSenderName.setText(msg.getSenderName());
+                    tvSenderName.setVisibility(View.VISIBLE);
+                } else {
+                    tvSenderName.setVisibility(View.GONE);
+                }
+            }
+
+            if (ivAvatar != null) {
+                if (msg.getSenderAvatarUrl() != null && !msg.getSenderAvatarUrl().isEmpty()) {
+                    Glide.with(itemView.getContext())
+                            .load(msg.getSenderAvatarUrl())
+                            .circleCrop()
+                            .placeholder(R.drawable.ic_profile)
+                            .error(R.drawable.ic_profile)
+                            .into(ivAvatar);
+                } else {
+                    ivAvatar.setImageResource(R.drawable.ic_profile);
+                }
+            }
+
+            if (tvDuration != null) tvDuration.setText("🎬 Video");
+            if (tvTime != null) tvTime.setText(msg.getFormattedTime());
+
+            String videoUrl = msg.getFileUrl();
+            if (videoUrl != null && !videoUrl.isEmpty()) {
+                itemView.setOnClickListener(v -> {
+                    try {
+                        Intent intent = new Intent(itemView.getContext(), com.example.project_ez_talk.ui.media.VideoPlayerActivity.class);
+                        intent.putExtra("video_url", videoUrl);
+                        intent.putExtra("sender_name", msg.getSenderName());
+                        intent.putExtra("timestamp", msg.getFormattedTime());
+                        intent.putExtra("caption", msg.getContent());
+                        itemView.getContext().startActivity(intent);
+                    } catch (Exception e) {
+                        Log.e(TAG, "Error opening video player: " + e.getMessage());
+                        Toast.makeText(itemView.getContext(), "Cannot open video", Toast.LENGTH_SHORT).show();
+                    }
+                });
+            }
+
+            itemView.setOnLongClickListener(v -> {
+                if (msg.isSentByMe(currentUserId)) {
+                    deleteMessageAtPosition(position);
+                }
+                return true;
+            });
+        }
+    }
+
+    // ==================== FILE VIEW HOLDERS ====================
 
     class FileSentVH extends RecyclerView.ViewHolder {
         TextView tvFileName, tvTime;
@@ -699,6 +803,8 @@ public class MessageAdapter extends RecyclerView.Adapter<RecyclerView.ViewHolder
         }
     }
 
+    // ==================== AUDIO VIEW HOLDERS ====================
+
     class AudioSentVH extends RecyclerView.ViewHolder {
         TextView tvDuration, tvTime;
         LinearLayout llTextContent;
@@ -789,6 +895,8 @@ public class MessageAdapter extends RecyclerView.Adapter<RecyclerView.ViewHolder
             });
         }
     }
+
+    // ==================== LOCATION VIEW HOLDERS ====================
 
     class LocationSentVH extends RecyclerView.ViewHolder {
         TextView tvLocation, tvTime;

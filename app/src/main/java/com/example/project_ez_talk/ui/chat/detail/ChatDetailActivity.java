@@ -72,14 +72,14 @@ import okhttp3.RequestBody;
 import okhttp3.Response;
 
 /**
- * ✅ COMPLETE ChatDetailActivity with FIXED FirebaseSignaling (using singleton)
+ * ✅ COMPLETE ChatDetailActivity with VIDEO + AUDIO UPLOAD
  */
 @SuppressWarnings("ALL")
 public class ChatDetailActivity extends BaseActivity {
 
     private static final String TAG = "ChatDetailActivity";
 
-    // ✅ CRITICAL: Firebase Realtime Database URL for europe-west1 region
+    // ✅ Firebase Realtime Database URL
     private static final String DATABASE_URL = "https://project-ez-talk-dccea-default-rtdb.europe-west1.firebasedatabase.app";
 
     // Supabase Configuration
@@ -88,6 +88,7 @@ public class ChatDetailActivity extends BaseActivity {
     private static final String BUCKET_IMAGES = "chat-images";
     private static final String BUCKET_DOCUMENTS = "chat-documents";
     private static final String BUCKET_AUDIO = "chat-audio";
+    private static final String BUCKET_VIDEO = "chat-video";
 
     // UI Views
     private Toolbar toolbar;
@@ -116,7 +117,7 @@ public class ChatDetailActivity extends BaseActivity {
     private CollectionReference messagesRef;
     private ListenerRegistration listener;
 
-    // Firebase Signaling for calls (✅ FIXED: Using singleton)
+    // Firebase Signaling for calls
     private FirebaseSignaling firebaseSignaling;
 
     // Other user info
@@ -140,6 +141,7 @@ public class ChatDetailActivity extends BaseActivity {
     private ActivityResultLauncher<Intent> cameraLauncher;
     private ActivityResultLauncher<Intent> documentLauncher;
     private ActivityResultLauncher<Intent> audioLauncher;
+    private ActivityResultLauncher<Intent> videoLauncher;
     private ActivityResultLauncher<Intent> contactLauncher;
     private ActivityResultLauncher<String[]> permissionLauncher;
     private ActivityResultLauncher<String[]> locationPermissionLauncher;
@@ -151,8 +153,6 @@ public class ChatDetailActivity extends BaseActivity {
         setContentView(R.layout.activity_chat_detail);
 
         setupActivityResultLaunchers();
-
-        // ✅ CRITICAL: Initialize Firebase with CORRECT Realtime Database URL
         initializeFirebase();
 
         if (currentUser == null) {
@@ -183,50 +183,35 @@ public class ChatDetailActivity extends BaseActivity {
         setupMessageInput();
         setupClickListeners();
 
-        // ✅ Initialize Firebase Signaling for incoming calls
+        // Initialize Firebase Signaling for incoming calls
         initializeFirebaseSignaling();
     }
 
-    /**
-     * ✅ CRITICAL METHOD: Initialize Firebase with CORRECT Realtime Database URL
-     */
     private void initializeFirebase() {
         Log.d(TAG, "🔄 Initializing Firebase...");
 
-        // Get current user
         currentUser = FirebaseAuth.getInstance().getCurrentUser();
         if (currentUser != null) {
             currentUserId = currentUser.getUid();
         }
 
-        // Initialize Firestore
         db = FirebaseFirestore.getInstance();
-
-        // ✅ CRITICAL: Initialize Realtime Database with europe-west1 URL
         rtdb = FirebaseDatabase.getInstance(DATABASE_URL);
-
-        // Initialize Location Manager
         locationManager = (LocationManager) getSystemService(LOCATION_SERVICE);
 
-        Log.d(TAG, "✅ Firebase fully initialized with Realtime DB: " + DATABASE_URL);
+        Log.d(TAG, "✅ Firebase fully initialized");
     }
 
-    /**
-     * ✅ Initialize Firebase Signaling and listen for incoming calls
-     * FIXED: Using singleton to avoid duplicate listeners
-     */
     private void initializeFirebaseSignaling() {
-        Log.d(TAG, "🔔 Initializing Firebase Signaling for incoming calls...");
+        Log.d(TAG, "🔔 Initializing Firebase Signaling...");
 
         if (currentUser == null) {
-            Log.e(TAG, "❌ Current user is null - cannot initialize signaling");
+            Log.e(TAG, "❌ Current user is null");
             return;
         }
 
-        // ✅ FIXED: Use SINGLETON instance
         firebaseSignaling = FirebaseSignaling.getInstance();
 
-        // ✅ FIXED: Check if already initialized for this user
         if (firebaseSignaling.isInitialized() &&
                 firebaseSignaling.getCurrentUserId().equals(currentUser.getUid())) {
             Log.d(TAG, "✅ Firebase Signaling already initialized");
@@ -234,47 +219,29 @@ public class ChatDetailActivity extends BaseActivity {
             return;
         }
 
-        // Initialize Firebase Signaling
         firebaseSignaling.init(currentUser.getUid(), new FirebaseSignaling.OnSuccessListener() {
             @Override
             public void onSuccess() {
-                Log.d(TAG, "✅ Firebase Signaling initialized successfully");
+                Log.d(TAG, "✅ Firebase Signaling initialized");
                 setupIncomingCallListener();
             }
 
             @Override
             public void onError() {
                 Log.e(TAG, "❌ Failed to initialize Firebase Signaling");
-                Toast.makeText(ChatDetailActivity.this,
-                        "Failed to initialize call listener",
-                        Toast.LENGTH_SHORT).show();
             }
         });
     }
 
-    /**
-     * ✅ Listen for incoming calls
-     * FIXED: Only show incoming call screen for OFFER signals
-     * Ignore ACCEPT, REJECT, END, and other control signals
-     */
     private void setupIncomingCallListener() {
         Log.d(TAG, "👂 Setting up incoming call listener...");
 
         firebaseSignaling.observeIncomingCalls(new FirebaseSignaling.OnCallDataListener() {
             @Override
             public void onCallDataReceived(CallData callData) {
-                Log.d(TAG, "📞 SIGNAL RECEIVED!");
-                Log.d(TAG, "    From: " + callData.getSenderId());
-                Log.d(TAG, "    Type: " + callData.getType());
-
-                // ✅ FIXED: Only process OFFER signals
-                // Ignore ACCEPT, REJECT, END - those are handled in VoiceCallActivity
                 if (callData.getType() == CallData.Type.OFFER) {
                     Log.d(TAG, "📞 INCOMING CALL!");
                     showIncomingCallScreen(callData);
-                } else {
-                    Log.d(TAG, "⚠️ Ignoring " + callData.getType() + " signal (not an incoming call)");
-                    // These signals are handled in VoiceCallActivity, not here
                 }
             }
 
@@ -298,20 +265,12 @@ public class ChatDetailActivity extends BaseActivity {
                 Log.e(TAG, "❌ Error listening for incoming calls");
             }
         });
-
-        Log.d(TAG, "✅ Incoming call listener setup complete");
     }
 
-    /**
-     * ✅ Show incoming call screen when receiving a call
-     */
     private void showIncomingCallScreen(CallData callData) {
         String callerId = callData.getSenderId();
         String callerName = callData.getData() != null ? callData.getData() : "Unknown";
         String callType = callData.getCallType() != null ? callData.getCallType() : "voice";
-
-        Log.d(TAG, "🔔 Showing incoming call screen for: " + callerName);
-        Log.d(TAG, "   Call Type: " + callType);
 
         Intent intent = new Intent(this, IntegratedIncomingCallActivity.class);
         intent.putExtra(IntegratedIncomingCallActivity.EXTRA_CALLER_ID, callerId);
@@ -319,13 +278,13 @@ public class ChatDetailActivity extends BaseActivity {
         intent.putExtra(IntegratedIncomingCallActivity.EXTRA_CALLER_AVATAR, "");
         intent.putExtra(IntegratedIncomingCallActivity.EXTRA_CALL_TYPE, callType);
         intent.putExtra(IntegratedIncomingCallActivity.EXTRA_CURRENT_USER_ID, currentUser.getUid());
-        intent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK | Intent.FLAG_ACTIVITY_NEW_TASK);
+        intent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
 
         startActivity(intent);
     }
 
     // ============================================================
-    // SETUP METHODS
+    // ACTIVITY RESULT LAUNCHERS
     // ============================================================
 
     private void setupActivityResultLaunchers() {
@@ -359,6 +318,7 @@ public class ChatDetailActivity extends BaseActivity {
                     }
                 });
 
+        // ✅ AUDIO LAUNCHER
         audioLauncher = registerForActivityResult(
                 new ActivityResultContracts.StartActivityForResult(),
                 result -> {
@@ -366,6 +326,18 @@ public class ChatDetailActivity extends BaseActivity {
                         Uri audioUri = result.getData().getData();
                         if (audioUri != null) {
                             uploadAudioToSupabase(audioUri);
+                        }
+                    }
+                });
+
+        // ✅ VIDEO LAUNCHER
+        videoLauncher = registerForActivityResult(
+                new ActivityResultContracts.StartActivityForResult(),
+                result -> {
+                    if (result.getResultCode() == RESULT_OK && result.getData() != null) {
+                        Uri videoUri = result.getData().getData();
+                        if (videoUri != null) {
+                            uploadVideoToSupabase(videoUri);
                         }
                     }
                 });
@@ -418,6 +390,10 @@ public class ChatDetailActivity extends BaseActivity {
                 });
     }
 
+    // ============================================================
+    // SETUP METHODS
+    // ============================================================
+
     private void initViews() {
         toolbar = findViewById(R.id.toolbar);
         ivUserAvatar = findViewById(R.id.ivUserAvatar);
@@ -449,7 +425,6 @@ public class ChatDetailActivity extends BaseActivity {
                         String avatar = documentSnapshot.getString("avatarUrl");
                         currentUserName = name != null ? name : "User";
                         currentUserAvatar = avatar != null ? avatar : "";
-                        Log.d(TAG, "✅ Current user loaded: " + currentUserName);
                     } else {
                         currentUserName = currentUser.getEmail() != null ? currentUser.getEmail() : "User";
                         currentUserAvatar = "";
@@ -624,32 +599,19 @@ public class ChatDetailActivity extends BaseActivity {
         btnAttach.setOnClickListener(v -> showAttachmentBottomSheet());
         btnEmoji.setOnClickListener(v -> Toast.makeText(this, "Emoji picker coming soon", Toast.LENGTH_SHORT).show());
 
-        // ✅ VOICE CALL
         btnVoiceCall.setOnClickListener(v -> initiateVoiceCall());
-
-        // ✅ VIDEO CALL
         btnVideoCall.setOnClickListener(v -> initiateVideoCall());
-
         btnMore.setOnClickListener(v -> Toast.makeText(this, "More options coming soon", Toast.LENGTH_SHORT).show());
     }
 
-    /**
-     * ✅ Initiate Voice Call
-     */
     private void initiateVoiceCall() {
         if (receiverId == null || receiverId.isEmpty()) {
             Toast.makeText(this, "Cannot start call: Invalid user", Toast.LENGTH_SHORT).show();
             return;
         }
 
-        Log.d(TAG, "═══════════════════════════════════════");
-        Log.d(TAG, "📞 INITIATING VOICE CALL");
-        Log.d(TAG, "   From: " + currentUserId);
-        Log.d(TAG, "   To: " + receiverId);
-        Log.d(TAG, "   Name: " + receiverName);
-        Log.d(TAG, "═══════════════════════════════════════");
+        Log.d(TAG, "📞 INITIATING VOICE CALL to: " + receiverName);
 
-        // ✅ STEP 1: Send OFFER signal via FirebaseSignaling
         if (firebaseSignaling != null) {
             CallData callData = new CallData();
             callData.setTargetId(receiverId);
@@ -660,28 +622,18 @@ public class ChatDetailActivity extends BaseActivity {
 
             firebaseSignaling.sendCallData(callData, () -> {
                 Log.e(TAG, "❌ Failed to send call via FirebaseSignaling");
-                Toast.makeText(ChatDetailActivity.this,
-                        "Failed to send call", Toast.LENGTH_SHORT).show();
+                Toast.makeText(ChatDetailActivity.this, "Failed to send call", Toast.LENGTH_SHORT).show();
             });
-
-            Log.d(TAG, "✅ Call request sent via FirebaseSignaling");
-        } else {
-            Log.e(TAG, "❌ FirebaseSignaling is null!");
         }
 
-        // ✅ STEP 2: Send StartCall via MainRepository
         MainRepository repository = MainRepository.getInstance();
         repository.sendCallRequest(receiverId, () -> {
             Log.e(TAG, "❌ Failed to send call via MainRepository");
             runOnUiThread(() -> {
-                Toast.makeText(ChatDetailActivity.this,
-                        "User not available", Toast.LENGTH_SHORT).show();
+                Toast.makeText(ChatDetailActivity.this, "User not available", Toast.LENGTH_SHORT).show();
             });
         });
 
-        Log.d(TAG, "✅ Call request sent via MainRepository");
-
-        // ✅ STEP 3: Navigate to voice call activity
         Intent intent = new Intent(this, VoiceCallActivity.class);
         intent.putExtra(VoiceCallActivity.EXTRA_USER_ID, receiverId);
         intent.putExtra(VoiceCallActivity.EXTRA_USER_NAME, receiverName);
@@ -689,27 +641,17 @@ public class ChatDetailActivity extends BaseActivity {
         intent.putExtra(VoiceCallActivity.EXTRA_CURRENT_USER_ID, currentUserId);
         intent.putExtra(VoiceCallActivity.EXTRA_IS_INCOMING, false);
 
-        Log.d(TAG, "✅ Starting VoiceCallActivity");
         startActivity(intent);
     }
 
-    /**
-     * ✅ Initiate Video Call
-     */
     private void initiateVideoCall() {
         if (receiverId == null || receiverId.isEmpty()) {
             Toast.makeText(this, "Cannot start call: Invalid user", Toast.LENGTH_SHORT).show();
             return;
         }
 
-        Log.d(TAG, "═══════════════════════════════════════");
-        Log.d(TAG, "📹 INITIATING VIDEO CALL");
-        Log.d(TAG, "   From: " + currentUserId);
-        Log.d(TAG, "   To: " + receiverId);
-        Log.d(TAG, "   Name: " + receiverName);
-        Log.d(TAG, "═══════════════════════════════════════");
+        Log.d(TAG, "📹 INITIATING VIDEO CALL to: " + receiverName);
 
-        // ✅ STEP 1: Send OFFER signal via FirebaseSignaling
         if (firebaseSignaling != null) {
             CallData callData = new CallData();
             callData.setTargetId(receiverId);
@@ -720,28 +662,18 @@ public class ChatDetailActivity extends BaseActivity {
 
             firebaseSignaling.sendCallData(callData, () -> {
                 Log.e(TAG, "❌ Failed to send call via FirebaseSignaling");
-                Toast.makeText(ChatDetailActivity.this,
-                        "Failed to send call", Toast.LENGTH_SHORT).show();
+                Toast.makeText(ChatDetailActivity.this, "Failed to send call", Toast.LENGTH_SHORT).show();
             });
-
-            Log.d(TAG, "✅ Call request sent via FirebaseSignaling");
-        } else {
-            Log.e(TAG, "❌ FirebaseSignaling is null!");
         }
 
-        // ✅ STEP 2: Send StartCall via MainRepository
         MainRepository repository = MainRepository.getInstance();
         repository.sendCallRequest(receiverId, () -> {
             Log.e(TAG, "❌ Failed to send call via MainRepository");
             runOnUiThread(() -> {
-                Toast.makeText(ChatDetailActivity.this,
-                        "User not available", Toast.LENGTH_SHORT).show();
+                Toast.makeText(ChatDetailActivity.this, "User not available", Toast.LENGTH_SHORT).show();
             });
         });
 
-        Log.d(TAG, "✅ Call request sent via MainRepository");
-
-        // ✅ STEP 3: Navigate to video call activity
         Intent intent = new Intent(this, IntegratedVideoCallActivity.class);
         intent.putExtra(IntegratedVideoCallActivity.EXTRA_USER_ID, receiverId);
         intent.putExtra(IntegratedVideoCallActivity.EXTRA_USER_NAME, receiverName);
@@ -749,7 +681,6 @@ public class ChatDetailActivity extends BaseActivity {
         intent.putExtra(IntegratedVideoCallActivity.EXTRA_CURRENT_USER_ID, currentUserId);
         intent.putExtra(IntegratedVideoCallActivity.EXTRA_IS_INCOMING, false);
 
-        Log.d(TAG, "✅ Starting IntegratedVideoCallActivity");
         startActivity(intent);
     }
 
@@ -850,6 +781,10 @@ public class ChatDetailActivity extends BaseActivity {
 
         dialog.show();
     }
+
+    // ============================================================
+    // IMAGE HANDLING
+    // ============================================================
 
     private void openGallery() {
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
@@ -975,6 +910,10 @@ public class ChatDetailActivity extends BaseActivity {
                 .addOnFailureListener(e -> Toast.makeText(this, "Failed to send image", Toast.LENGTH_SHORT).show());
     }
 
+    // ============================================================
+    // DOCUMENT HANDLING
+    // ============================================================
+
     private void openDocumentPicker() {
         Intent intent = new Intent(Intent.ACTION_OPEN_DOCUMENT);
         intent.addCategory(Intent.CATEGORY_OPENABLE);
@@ -983,17 +922,332 @@ public class ChatDetailActivity extends BaseActivity {
     }
 
     private void uploadDocumentToSupabase(Uri documentUri) {
-        Toast.makeText(this, "Document upload coming soon", Toast.LENGTH_SHORT).show();
+        if (documentUri == null) {
+            Toast.makeText(this, "No document selected", Toast.LENGTH_SHORT).show();
+            return;
+        }
+
+        if (!isNetworkAvailable()) {
+            Toast.makeText(this, "No internet connection", Toast.LENGTH_SHORT).show();
+            return;
+        }
+
+        Toast.makeText(this, "Uploading document...", Toast.LENGTH_SHORT).show();
+
+        new Thread(() -> {
+            try {
+                InputStream inputStream = getContentResolver().openInputStream(documentUri);
+                if (inputStream == null) {
+                    runOnUiThread(() -> Toast.makeText(this, "Failed to read document", Toast.LENGTH_SHORT).show());
+                    return;
+                }
+
+                byte[] documentData = readBytes(inputStream);
+                String fileName = getFileName(documentUri);
+                if (fileName == null || fileName.isEmpty()) {
+                    fileName = "document_" + System.currentTimeMillis();
+                }
+
+                String filePathWithoutExtension = "chat_" + chatId + "_" + System.currentTimeMillis();
+                String filePath = "chat_documents/" + filePathWithoutExtension + "_" + fileName;
+                String uploadUrl = SUPABASE_URL + "/storage/v1/object/" + BUCKET_DOCUMENTS + "/" + filePath;
+
+                OkHttpClient client = new OkHttpClient();
+                RequestBody body = RequestBody.create(documentData, MediaType.parse("application/octet-stream"));
+
+                Request request = new Request.Builder()
+                        .url(uploadUrl)
+                        .post(body)
+                        .addHeader("Content-Type", "application/octet-stream")
+                        .addHeader("Authorization", "Bearer " + SUPABASE_KEY)
+                        .addHeader("apikey", SUPABASE_KEY)
+                        .build();
+
+                Response response = client.newCall(request).execute();
+
+                if (response.isSuccessful()) {
+                    String documentUrl = SUPABASE_URL + "/storage/v1/object/public/" + BUCKET_DOCUMENTS + "/" + filePath;
+                    String finalFileName = fileName;
+                    runOnUiThread(() -> sendDocumentMessage(documentUrl, finalFileName));
+                    Log.d(TAG, "✅ Document uploaded successfully: " + documentUrl);
+                } else {
+                    String errorBody = response.body() != null ? response.body().string() : "Unknown error";
+                    Log.e(TAG, "❌ Upload failed: " + response.code() + " - " + errorBody);
+                    runOnUiThread(() -> Toast.makeText(this, "Upload failed: " + response.code(), Toast.LENGTH_SHORT).show());
+                }
+
+                response.close();
+
+            } catch (Exception e) {
+                Log.e(TAG, "❌ Document upload error: " + e.getMessage());
+                runOnUiThread(() -> Toast.makeText(this, "Error: " + e.getMessage(), Toast.LENGTH_SHORT).show());
+            }
+        }).start();
     }
+
+    private void sendDocumentMessage(String documentUrl, String fileName) {
+        Message message = new Message(
+                currentUser.getUid(),
+                receiverId,
+                fileName,
+                Message.MessageType.FILE
+        );
+
+        message.setFileUrl(documentUrl);
+        message.setSenderName(currentUserName);
+        message.setSenderAvatarUrl(currentUserAvatar);
+        message.setTimestamp(System.currentTimeMillis());
+
+        messagesRef.add(message)
+                .addOnSuccessListener(ref -> {
+                    Log.d(TAG, "✅ Document message saved");
+                    updateChatListBothUsers("[Document: " + fileName + "]");
+                    Toast.makeText(this, "Document sent successfully", Toast.LENGTH_SHORT).show();
+                })
+                .addOnFailureListener(e -> {
+                    Log.e(TAG, "❌ Failed to save document message: " + e.getMessage());
+                    Toast.makeText(this, "Failed to send document", Toast.LENGTH_SHORT).show();
+                });
+    }
+
+    // ============================================================
+    // ✅ AUDIO HANDLING
+    // ============================================================
 
     private void openAudioPicker() {
         Intent intent = new Intent(Intent.ACTION_PICK, MediaStore.Audio.Media.EXTERNAL_CONTENT_URI);
         audioLauncher.launch(intent);
     }
 
+    /**
+     * ✅ COMPLETE: Upload Audio to Supabase
+     */
     private void uploadAudioToSupabase(Uri audioUri) {
-        Toast.makeText(this, "Audio upload coming soon", Toast.LENGTH_SHORT).show();
+        if (audioUri == null) {
+            Toast.makeText(this, "No audio selected", Toast.LENGTH_SHORT).show();
+            return;
+        }
+
+        if (!isNetworkAvailable()) {
+            Toast.makeText(this, "No internet connection", Toast.LENGTH_SHORT).show();
+            return;
+        }
+
+        Toast.makeText(this, "Uploading audio...", Toast.LENGTH_SHORT).show();
+
+        new Thread(() -> {
+            try {
+                // ✅ STEP 1: Read the audio file
+                InputStream inputStream = getContentResolver().openInputStream(audioUri);
+                if (inputStream == null) {
+                    runOnUiThread(() -> Toast.makeText(this, "Failed to read audio", Toast.LENGTH_SHORT).show());
+                    return;
+                }
+
+                byte[] audioData = readBytes(inputStream);
+
+                // ✅ STEP 2: Get the file name
+                String fileName = getFileName(audioUri);
+                if (fileName == null || fileName.isEmpty()) {
+                    fileName = "audio_" + System.currentTimeMillis() + ".mp3";
+                }
+
+                Log.d(TAG, "🎵 Audio name: " + fileName);
+
+                // ✅ STEP 3: Create file path in Supabase
+                String filePath = "chat_audio/" + "chat_" + chatId + "_" + System.currentTimeMillis() + "_" + fileName;
+
+                // ✅ STEP 4: Upload to Supabase
+                String uploadUrl = SUPABASE_URL + "/storage/v1/object/" + BUCKET_AUDIO + "/" + filePath;
+
+                OkHttpClient client = new OkHttpClient();
+                RequestBody body = RequestBody.create(audioData, MediaType.parse("application/octet-stream"));
+
+                Request request = new Request.Builder()
+                        .url(uploadUrl)
+                        .post(body)
+                        .addHeader("Content-Type", "application/octet-stream")
+                        .addHeader("Authorization", "Bearer " + SUPABASE_KEY)
+                        .addHeader("apikey", SUPABASE_KEY)
+                        .build();
+
+                Log.d(TAG, "📤 Uploading audio...");
+
+                Response response = client.newCall(request).execute();
+
+                // ✅ STEP 5: Handle response
+                if (response.isSuccessful()) {
+                    String audioUrl = SUPABASE_URL + "/storage/v1/object/public/" + BUCKET_AUDIO + "/" + filePath;
+                    Log.d(TAG, "✅ Audio uploaded successfully: " + audioUrl);
+                    String finalFileName = fileName;
+                    runOnUiThread(() -> sendAudioMessage(audioUrl, finalFileName));
+                } else {
+                    String errorBody = response.body() != null ? response.body().string() : "Unknown error";
+                    Log.e(TAG, "❌ Upload failed: " + response.code() + " - " + errorBody);
+                    runOnUiThread(() -> Toast.makeText(this, "Upload failed: " + response.code(), Toast.LENGTH_SHORT).show());
+                }
+
+                response.close();
+
+            } catch (Exception e) {
+                Log.e(TAG, "❌ Audio upload error: " + e.getMessage());
+                runOnUiThread(() -> Toast.makeText(this, "Error: " + e.getMessage(), Toast.LENGTH_SHORT).show());
+            }
+        }).start();
     }
+
+    /**
+     * ✅ NEW: Send Audio Message to Firestore
+     */
+    private void sendAudioMessage(String audioUrl, String fileName) {
+        Message message = new Message(
+                currentUser.getUid(),
+                receiverId,
+                fileName,
+                Message.MessageType.AUDIO
+        );
+
+        message.setFileUrl(audioUrl);
+        message.setSenderName(currentUserName);
+        message.setSenderAvatarUrl(currentUserAvatar);
+        message.setTimestamp(System.currentTimeMillis());
+
+        Log.d(TAG, "💾 Saving audio message to Firestore...");
+
+        messagesRef.add(message)
+                .addOnSuccessListener(ref -> {
+                    Log.d(TAG, "✅ Audio message saved to Firebase");
+                    updateChatListBothUsers("[Audio]");
+                    Toast.makeText(this, "Audio sent successfully", Toast.LENGTH_SHORT).show();
+                })
+                .addOnFailureListener(e -> {
+                    Log.e(TAG, "❌ Failed to save audio message: " + e.getMessage());
+                    Toast.makeText(this, "Failed to send audio", Toast.LENGTH_SHORT).show();
+                });
+    }
+
+    // ============================================================
+    // ✅ VIDEO HANDLING
+    // ============================================================
+
+    /**
+     * ✅ NEW: Open Video Picker
+     */
+    private void openVideoPicker() {
+        Intent intent = new Intent(Intent.ACTION_PICK, MediaStore.Video.Media.EXTERNAL_CONTENT_URI);
+        videoLauncher.launch(intent);
+    }
+
+    /**
+     * ✅ COMPLETE: Upload Video to Supabase
+     */
+    private void uploadVideoToSupabase(Uri videoUri) {
+        if (videoUri == null) {
+            Toast.makeText(this, "No video selected", Toast.LENGTH_SHORT).show();
+            return;
+        }
+
+        if (!isNetworkAvailable()) {
+            Toast.makeText(this, "No internet connection", Toast.LENGTH_SHORT).show();
+            return;
+        }
+
+        Toast.makeText(this, "Uploading video...", Toast.LENGTH_SHORT).show();
+
+        new Thread(() -> {
+            try {
+                // ✅ STEP 1: Read the video file
+                InputStream inputStream = getContentResolver().openInputStream(videoUri);
+                if (inputStream == null) {
+                    runOnUiThread(() -> Toast.makeText(this, "Failed to read video", Toast.LENGTH_SHORT).show());
+                    return;
+                }
+
+                byte[] videoData = readBytes(inputStream);
+
+                // ✅ STEP 2: Get the file name
+                String fileName = getFileName(videoUri);
+                if (fileName == null || fileName.isEmpty()) {
+                    fileName = "video_" + System.currentTimeMillis() + ".mp4";
+                }
+
+                Log.d(TAG, "🎬 Video name: " + fileName);
+
+                // ✅ STEP 3: Create file path in Supabase
+                String filePath = "chat_video/" + "chat_" + chatId + "_" + System.currentTimeMillis() + "_" + fileName;
+
+                // ✅ STEP 4: Upload to Supabase
+                String uploadUrl = SUPABASE_URL + "/storage/v1/object/" + BUCKET_VIDEO + "/" + filePath;
+
+                OkHttpClient client = new OkHttpClient();
+                RequestBody body = RequestBody.create(videoData, MediaType.parse("application/octet-stream"));
+
+                Request request = new Request.Builder()
+                        .url(uploadUrl)
+                        .post(body)
+                        .addHeader("Content-Type", "application/octet-stream")
+                        .addHeader("Authorization", "Bearer " + SUPABASE_KEY)
+                        .addHeader("apikey", SUPABASE_KEY)
+                        .build();
+
+                Log.d(TAG, "📤 Uploading video...");
+
+                Response response = client.newCall(request).execute();
+
+                // ✅ STEP 5: Handle response
+                if (response.isSuccessful()) {
+                    String videoUrl = SUPABASE_URL + "/storage/v1/object/public/" + BUCKET_VIDEO + "/" + filePath;
+                    Log.d(TAG, "✅ Video uploaded successfully: " + videoUrl);
+                    String finalFileName = fileName;
+                    runOnUiThread(() -> sendVideoMessage(videoUrl, finalFileName));
+                } else {
+                    String errorBody = response.body() != null ? response.body().string() : "Unknown error";
+                    Log.e(TAG, "❌ Upload failed: " + response.code() + " - " + errorBody);
+                    runOnUiThread(() -> Toast.makeText(this, "Upload failed: " + response.code(), Toast.LENGTH_SHORT).show());
+                }
+
+                response.close();
+
+            } catch (Exception e) {
+                Log.e(TAG, "❌ Video upload error: " + e.getMessage());
+                runOnUiThread(() -> Toast.makeText(this, "Error: " + e.getMessage(), Toast.LENGTH_SHORT).show());
+            }
+        }).start();
+    }
+
+    /**
+     * ✅ NEW: Send Video Message to Firestore
+     */
+    private void sendVideoMessage(String videoUrl, String fileName) {
+        Message message = new Message(
+                currentUser.getUid(),
+                receiverId,
+                fileName,
+                Message.MessageType.VIDEO
+        );
+
+        message.setFileUrl(videoUrl);
+        message.setSenderName(currentUserName);
+        message.setSenderAvatarUrl(currentUserAvatar);
+        message.setTimestamp(System.currentTimeMillis());
+
+        Log.d(TAG, "💾 Saving video message to Firestore...");
+
+        messagesRef.add(message)
+                .addOnSuccessListener(ref -> {
+                    Log.d(TAG, "✅ Video message saved to Firebase");
+                    updateChatListBothUsers("[Video]");
+                    Toast.makeText(this, "Video sent successfully", Toast.LENGTH_SHORT).show();
+                })
+                .addOnFailureListener(e -> {
+                    Log.e(TAG, "❌ Failed to save video message: " + e.getMessage());
+                    Toast.makeText(this, "Failed to send video", Toast.LENGTH_SHORT).show();
+                });
+    }
+
+    // ============================================================
+    // LOCATION & CONTACT HANDLING
+    // ============================================================
 
     private void requestLocationPermission() {
         if (ContextCompat.checkSelfPermission(this, Manifest.permission.ACCESS_FINE_LOCATION) == PackageManager.PERMISSION_GRANTED) {
@@ -1035,7 +1289,7 @@ public class ChatDetailActivity extends BaseActivity {
 
                 messagesRef.add(message)
                         .addOnSuccessListener(ref -> {
-                            Log.d(TAG, "✅ LOCATION message saved to Firebase");
+                            Log.d(TAG, "✅ LOCATION message saved");
                             updateChatListBothUsers("[Location]");
                         })
                         .addOnFailureListener(e -> {
@@ -1101,7 +1355,7 @@ public class ChatDetailActivity extends BaseActivity {
 
         messagesRef.add(message)
                 .addOnSuccessListener(ref -> {
-                    Log.d(TAG, "✅ CONTACT message saved to Firebase");
+                    Log.d(TAG, "✅ CONTACT message saved");
                     updateChatListBothUsers("[Contact: " + contactName + "]");
                 })
                 .addOnFailureListener(e -> {
@@ -1109,6 +1363,10 @@ public class ChatDetailActivity extends BaseActivity {
                     Toast.makeText(ChatDetailActivity.this, "Failed to send contact", Toast.LENGTH_SHORT).show();
                 });
     }
+
+    // ============================================================
+    // UTILITY METHODS
+    // ============================================================
 
     private byte[] readBytes(InputStream inputStream) throws IOException {
         byte[] buffer = new byte[1024];
@@ -1151,10 +1409,8 @@ public class ChatDetailActivity extends BaseActivity {
             Log.d(TAG, "Listener removed");
         }
 
-        // ✅ CRITICAL: Clean up Firebase Signaling
         if (firebaseSignaling != null) {
             firebaseSignaling.removeListener();
-            // ✅ IMPORTANT: Don't call cleanup() - singleton should persist
             Log.d(TAG, "Firebase Signaling listener removed");
         }
     }
