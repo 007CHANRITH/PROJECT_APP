@@ -13,11 +13,14 @@ import android.net.NetworkInfo;
 import android.net.Uri;
 import android.os.Build;
 import android.os.Bundle;
+import android.os.Handler;
+import android.os.Looper;
 import android.provider.ContactsContract;
 import android.provider.MediaStore;
 import android.text.Editable;
 import android.text.TextWatcher;
 import android.util.Log;
+import android.view.MotionEvent;
 import android.view.View;
 import android.widget.EditText;
 import android.widget.ImageView;
@@ -42,6 +45,7 @@ import com.example.project_ez_talk.ui.BaseActivity;
 import com.example.project_ez_talk.ui.call.incoming.IntegratedIncomingCallActivity;
 import com.example.project_ez_talk.ui.call.video.IntegratedVideoCallActivity;
 import com.example.project_ez_talk.ui.call.voice.VoiceCallActivity;
+import com.example.project_ez_talk.utils.AudioRecorderManager;
 import com.example.project_ez_talk.utils.MessageNotificationManager;
 import com.example.project_ez_talk.webrtc.FirebaseSignaling;
 import com.example.project_ez_talk.webrtc.MainRepository;
@@ -57,6 +61,7 @@ import com.google.firebase.firestore.ListenerRegistration;
 import com.google.firebase.firestore.Query;
 import com.google.firebase.firestore.SetOptions;
 
+import java.io.File;
 import java.io.IOException;
 import java.io.InputStream;
 import java.util.ArrayList;
@@ -105,6 +110,17 @@ public class ChatDetailActivity extends BaseActivity {
     private FloatingActionButton fabVoice;
     private ImageView btnEmoji;
     private ImageView btnAttach;
+
+    // Voice Recording Views
+    private View voiceRecordingOverlay;
+    private TextView tvRecordingTime;
+
+    // Voice Recording
+    private AudioRecorderManager audioRecorder;
+    private Handler recordingHandler;
+    private long recordingStartTime;
+    private boolean isRecording = false;
+    private AudioRecorderManager.RecordingCallback currentRecordingCallback;
 
     // Adapters and Data
     private MessageAdapter messageAdapter;
@@ -411,6 +427,14 @@ public class ChatDetailActivity extends BaseActivity {
         btnEmoji = findViewById(R.id.btnEmoji);
         btnAttach = findViewById(R.id.btnAttach);
 
+        // Voice recording views
+        voiceRecordingOverlay = findViewById(R.id.voiceRecordingOverlay);
+        tvRecordingTime = findViewById(R.id.tvRecordingTime);
+
+        // Initialize voice recorder
+        audioRecorder = new AudioRecorderManager();
+        recordingHandler = new Handler(Looper.getMainLooper());
+
         fabSend.setVisibility(View.GONE);
         fabVoice.setVisibility(View.VISIBLE);
     }
@@ -595,7 +619,20 @@ public class ChatDetailActivity extends BaseActivity {
     private void setupClickListeners() {
         btnBack.setOnClickListener(v -> finish());
         fabSend.setOnClickListener(v -> sendTextMessage());
-        fabVoice.setOnClickListener(v -> Toast.makeText(this, "Voice recording coming soon", Toast.LENGTH_SHORT).show());
+
+        // Voice recording with press and hold
+        fabVoice.setOnTouchListener((v, event) -> {
+            switch (event.getAction()) {
+                case MotionEvent.ACTION_DOWN:
+                    startVoiceRecording();
+                    return true;
+                case MotionEvent.ACTION_UP:
+                case MotionEvent.ACTION_CANCEL:
+                    stopVoiceRecording(event.getAction() == MotionEvent.ACTION_CANCEL);
+                    return true;
+            }
+            return false;
+        });
         btnAttach.setOnClickListener(v -> showAttachmentBottomSheet());
         btnEmoji.setOnClickListener(v -> Toast.makeText(this, "Emoji picker coming soon", Toast.LENGTH_SHORT).show());
 
@@ -760,6 +797,186 @@ public class ChatDetailActivity extends BaseActivity {
                 .document(chatId)
                 .update(chatDataReceiver);
     }
+
+    // ============================================================
+    // Voice Recording Methods
+    // ============================================================
+
+    private void startVoiceRecording() {
+        if (isRecording) return;
+
+        // Check permission
+        if (checkSelfPermission(android.Manifest.permission.RECORD_AUDIO) !=
+                android.content.pm.PackageManager.PERMISSION_GRANTED) {
+            requestPermissions(new String[]{android.Manifest.permission.RECORD_AUDIO}, 100);
+            return;
+        }
+
+        try {
+            currentRecordingCallback = new AudioRecorderManager.RecordingCallback() {
+                @Override
+                public void onRecordingStarted() {
+                    runOnUiThread(() -> {
+                        isRecording = true;
+                        recordingStartTime = System.currentTimeMillis();
+                        voiceRecordingOverlay.setVisibility(View.VISIBLE);
+                        startRecordingTimer();
+                    });
+                }
+
+                @Override
+                public void onRecordingProgress(long durationMs) {
+                    // Progress handled by timer
+                }
+
+                @Override
+                public void onRecordingCompleted(String filePath, long durationMs) {
+                    runOnUiThread(() -> {
+                        isRecording = false;
+                        voiceRecordingOverlay.setVisibility(View.GONE);
+                        recordingHandler.removeCallbacksAndMessages(null);
+                        uploadVoiceMessage(filePath, durationMs);
+                    });
+                }
+
+                @Override
+                public void onRecordingError(String error) {
+                    runOnUiThread(() -> {
+                        isRecording = false;
+                        voiceRecordingOverlay.setVisibility(View.GONE);
+                        recordingHandler.removeCallbacksAndMessages(null);
+                        Toast.makeText(ChatDetailActivity.this, "Recording error: " + error, Toast.LENGTH_SHORT).show();
+                    });
+                }
+            };
+            audioRecorder.startRecording(this, currentRecordingCallback);
+        } catch (Exception e) {
+            Log.e(TAG, "Failed to start recording", e);
+            Toast.makeText(this, "Failed to start recording", Toast.LENGTH_SHORT).show();
+        }
+    }
+
+    private void stopVoiceRecording(boolean cancel) {
+        if (!isRecording) return;
+
+        if (cancel) {
+            audioRecorder.cancelRecording();
+            isRecording = false;
+            voiceRecordingOverlay.setVisibility(View.GONE);
+            recordingHandler.removeCallbacksAndMessages(null);
+            Toast.makeText(this, "Recording cancelled", Toast.LENGTH_SHORT).show();
+        } else {
+            audioRecorder.stopRecording(currentRecordingCallback);
+        }
+    }
+
+    private void startRecordingTimer() {
+        recordingHandler.post(new Runnable() {
+            @Override
+            public void run() {
+                if (isRecording) {
+                    long elapsed = System.currentTimeMillis() - recordingStartTime;
+                    int seconds = (int) (elapsed / 1000) % 60;
+                    int minutes = (int) (elapsed / 1000) / 60;
+                    tvRecordingTime.setText(String.format("%02d:%02d", minutes, seconds));
+                    recordingHandler.postDelayed(this, 100);
+                }
+            }
+        });
+    }
+
+    private void uploadVoiceMessage(String filePath, long durationMs) {
+        File audioFile = new File(filePath);
+        if (!audioFile.exists()) {
+            Toast.makeText(this, "Audio file not found", Toast.LENGTH_SHORT).show();
+            return;
+        }
+
+        // Show progress
+        android.app.ProgressDialog progressDialog = new android.app.ProgressDialog(this);
+        progressDialog.setMessage("Uploading voice message...");
+        progressDialog.setCancelable(false);
+        progressDialog.show();
+
+        new Thread(() -> {
+            try {
+                OkHttpClient client = new OkHttpClient();
+
+                byte[] fileBytes = new byte[(int) audioFile.length()];
+                java.io.FileInputStream fis = new java.io.FileInputStream(audioFile);
+                fis.read(fileBytes);
+                fis.close();
+
+                String fileName = "voice_" + System.currentTimeMillis() + ".m4a";
+                RequestBody requestBody = RequestBody.create(
+                        MediaType.parse("audio/mp4"),
+                        fileBytes
+                );
+
+                Request request = new Request.Builder()
+                        .url(SUPABASE_URL + "/storage/v1/object/" + BUCKET_AUDIO + "/" + fileName)
+                        .addHeader("Authorization", "Bearer " + SUPABASE_KEY)
+                        .addHeader("Content-Type", "audio/mp4")
+                        .post(requestBody)
+                        .build();
+
+                Response response = client.newCall(request).execute();
+
+                if (response.isSuccessful()) {
+                    String fileUrl = SUPABASE_URL + "/storage/v1/object/public/" + BUCKET_AUDIO + "/" + fileName;
+
+                    runOnUiThread(() -> {
+                        progressDialog.dismiss();
+                        sendAudioMessage(fileUrl, durationMs);
+                        audioFile.delete();
+                    });
+                } else {
+                    throw new Exception("Upload failed: " + response.code());
+                }
+            } catch (Exception e) {
+                Log.e(TAG, "Upload error", e);
+                runOnUiThread(() -> {
+                    progressDialog.dismiss();
+                    Toast.makeText(ChatDetailActivity.this, "Upload failed: " + e.getMessage(), Toast.LENGTH_SHORT).show();
+                    audioFile.delete();
+                });
+            }
+        }).start();
+    }
+
+    private void sendAudioMessage(String audioUrl, long durationMs) {
+        Message message = new Message(
+                currentUser.getUid(),
+                receiverId,
+                audioUrl,
+                Message.MessageType.AUDIO
+        );
+
+        message.setSenderName(currentUserName);
+        message.setSenderAvatarUrl(currentUserAvatar);
+        message.setTimestamp(System.currentTimeMillis());
+        message.setDuration(durationMs);
+
+        messagesRef.add(message)
+                .addOnSuccessListener(ref -> {
+                    Log.d(TAG, "✅ Voice message sent");
+                    updateChatListBothUsers("🎤 Voice message");
+
+                    MessageNotificationManager.sendMessageNotification(
+                            receiverId,
+                            currentUserName,
+                            "🎤 Voice message",
+                            chatId,
+                            currentUser.getUid()
+                    );
+                })
+                .addOnFailureListener(e -> {
+                    Log.e(TAG, "Failed to send voice message: " + e.getMessage());
+                    Toast.makeText(this, "Failed to send voice message", Toast.LENGTH_SHORT).show();
+                });
+    }
+
+    // ============================================================
 
     private void showAttachmentBottomSheet() {
         BottomSheetDialog dialog = new BottomSheetDialog(this);
@@ -1080,7 +1297,7 @@ public class ChatDetailActivity extends BaseActivity {
                     String audioUrl = SUPABASE_URL + "/storage/v1/object/public/" + BUCKET_AUDIO + "/" + filePath;
                     Log.d(TAG, "✅ Audio uploaded successfully: " + audioUrl);
                     String finalFileName = fileName;
-                    runOnUiThread(() -> sendAudioMessage(audioUrl, finalFileName));
+                    runOnUiThread(() -> sendAudioFileMessage(audioUrl, finalFileName));
                 } else {
                     String errorBody = response.body() != null ? response.body().string() : "Unknown error";
                     Log.e(TAG, "❌ Upload failed: " + response.code() + " - " + errorBody);
@@ -1097,9 +1314,9 @@ public class ChatDetailActivity extends BaseActivity {
     }
 
     /**
-     * ✅ NEW: Send Audio Message to Firestore
+     * ✅ NEW: Send Audio File Message to Firestore
      */
-    private void sendAudioMessage(String audioUrl, String fileName) {
+    private void sendAudioFileMessage(String audioUrl, String fileName) {
         Message message = new Message(
                 currentUser.getUid(),
                 receiverId,

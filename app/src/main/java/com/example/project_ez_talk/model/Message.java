@@ -25,6 +25,7 @@ public class Message {
     private String fileUrl;
     private String messageType = "TEXT";
     private long timestamp;
+    private long duration; // Duration in milliseconds for audio/video
     private String senderName;
     private String senderAvatarUrl;
     private boolean isDeleted = false;
@@ -122,6 +123,14 @@ public class Message {
 
     public void setTimestamp(long timestamp) {
         this.timestamp = timestamp;
+    }
+
+    public void setDuration(long duration) {
+        this.duration = duration;
+    }
+
+    public long getDuration() {
+        return duration;
     }
 
     public void setSenderName(String senderName) {

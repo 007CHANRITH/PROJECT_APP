@@ -20,8 +20,11 @@ import androidx.recyclerview.widget.RecyclerView;
 import com.bumptech.glide.Glide;
 import com.example.project_ez_talk.R;
 import com.example.project_ez_talk.model.Message;
+import com.example.project_ez_talk.utils.AudioPlayerManager;
+import com.google.android.material.floatingactionbutton.FloatingActionButton;
 import com.google.firebase.auth.FirebaseAuth;
 import com.google.firebase.firestore.FirebaseFirestore;
+import android.widget.SeekBar;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -41,6 +44,10 @@ public class MessageAdapter extends RecyclerView.Adapter<RecyclerView.ViewHolder
     private final FirebaseFirestore db;
     private String currentChatId;
     private String chatType = "group";
+
+    // ==================== AUDIO PLAYER ====================
+    private AudioPlayerManager audioPlayerManager;
+    private String currentPlayingMessageId;
 
     private final List<String> deletingMessageIds = new ArrayList<>();
 
@@ -73,6 +80,7 @@ public class MessageAdapter extends RecyclerView.Adapter<RecyclerView.ViewHolder
         this.currentUserId = FirebaseAuth.getInstance().getCurrentUser() != null ?
                 FirebaseAuth.getInstance().getCurrentUser().getUid() : "";
         this.db = FirebaseFirestore.getInstance();
+        this.audioPlayerManager = new AudioPlayerManager();
     }
 
     // ==================== SETTERS ====================
@@ -255,9 +263,9 @@ public class MessageAdapter extends RecyclerView.Adapter<RecyclerView.ViewHolder
             case TYPE_FILE_RECEIVED:
                 return new FileReceivedVH(inflater.inflate(R.layout.item_message_received, parent, false));
             case TYPE_AUDIO_SENT:
-                return new AudioSentVH(inflater.inflate(R.layout.item_message_sent, parent, false));
+                return new AudioSentVH(inflater.inflate(R.layout.item_message_voice, parent, false));
             case TYPE_AUDIO_RECEIVED:
-                return new AudioReceivedVH(inflater.inflate(R.layout.item_message_received, parent, false));
+                return new AudioReceivedVH(inflater.inflate(R.layout.item_message_voice, parent, false));
             case TYPE_LOCATION_SENT:
                 return new LocationSentVH(inflater.inflate(R.layout.item_message_sent, parent, false));
             case TYPE_LOCATION_RECEIVED:
@@ -806,28 +814,48 @@ public class MessageAdapter extends RecyclerView.Adapter<RecyclerView.ViewHolder
     // ==================== AUDIO VIEW HOLDERS ====================
 
     class AudioSentVH extends RecyclerView.ViewHolder {
+        FloatingActionButton fabPlayPause;
+        SeekBar seekBarAudio;
         TextView tvDuration, tvTime;
-        LinearLayout llTextContent;
-        CardView cvImageContainer;
 
         AudioSentVH(View view) {
             super(view);
-            tvDuration = view.findViewById(R.id.tvMessage);
+            fabPlayPause = view.findViewById(R.id.fabPlayPause);
+            seekBarAudio = view.findViewById(R.id.seekBarAudio);
+            tvDuration = view.findViewById(R.id.tvDuration);
             tvTime = view.findViewById(R.id.tvTime);
-            llTextContent = view.findViewById(R.id.llTextContent);
-            cvImageContainer = view.findViewById(R.id.cvImageContainer);
         }
 
         @SuppressLint("SetTextI18n")
         void bind(Message msg, int position) {
-            if (cvImageContainer != null) cvImageContainer.setVisibility(View.GONE);
-            if (llTextContent != null) llTextContent.setVisibility(View.VISIBLE);
-
-            if (tvDuration != null) tvDuration.setText("🎵 Audio Message");
             if (tvTime != null) tvTime.setText(msg.getFormattedTime());
 
-            if (msg.getFileUrl() != null && !msg.getFileUrl().isEmpty()) {
-                itemView.setOnClickListener(v -> playAudio(itemView.getContext(), msg.getFileUrl()));
+            // Set duration from message
+            if (tvDuration != null) {
+                long durationMs = msg.getDuration();
+                if (durationMs > 0) {
+                    int seconds = (int) (durationMs / 1000) % 60;
+                    int minutes = (int) (durationMs / 1000) / 60;
+                    tvDuration.setText(String.format("%d:%02d", minutes, seconds));
+                } else {
+                    tvDuration.setText("0:00");
+                }
+            }
+
+            // Play/pause button
+            boolean isPlaying = msg.getMessageId() != null && msg.getMessageId().equals(currentPlayingMessageId);
+            if (fabPlayPause != null) {
+                fabPlayPause.setImageResource(isPlaying ? R.drawable.ic_pause : R.drawable.ic_play);
+                fabPlayPause.setOnClickListener(v -> {
+                    if (msg.getFileUrl() != null && !msg.getFileUrl().isEmpty()) {
+                        playPauseAudio(msg);
+                    }
+                });
+            }
+
+            // Reset seekbar if not playing
+            if (seekBarAudio != null && !isPlaying) {
+                seekBarAudio.setProgress(0);
             }
 
             itemView.setOnLongClickListener(v -> {
@@ -838,53 +866,48 @@ public class MessageAdapter extends RecyclerView.Adapter<RecyclerView.ViewHolder
     }
 
     class AudioReceivedVH extends RecyclerView.ViewHolder {
-        ImageView ivAvatar;
-        TextView tvSenderName, tvDuration, tvTime;
-        LinearLayout llTextContent;
-        CardView cvImageContainer;
+        FloatingActionButton fabPlayPause;
+        SeekBar seekBarAudio;
+        TextView tvDuration, tvTime;
 
         AudioReceivedVH(View view) {
             super(view);
-            ivAvatar = view.findViewById(R.id.ivAvatar);
-            tvSenderName = view.findViewById(R.id.tvSenderName);
-            tvDuration = view.findViewById(R.id.tvMessage);
+            fabPlayPause = view.findViewById(R.id.fabPlayPause);
+            seekBarAudio = view.findViewById(R.id.seekBarAudio);
+            tvDuration = view.findViewById(R.id.tvDuration);
             tvTime = view.findViewById(R.id.tvTime);
-            llTextContent = view.findViewById(R.id.llTextContent);
-            cvImageContainer = view.findViewById(R.id.cvImageContainer);
         }
 
         @SuppressLint("SetTextI18n")
         void bind(Message msg, int position) {
-            if (cvImageContainer != null) cvImageContainer.setVisibility(View.GONE);
-            if (llTextContent != null) llTextContent.setVisibility(View.VISIBLE);
-
-            if (tvDuration != null) tvDuration.setText("🎵 Audio Message");
             if (tvTime != null) tvTime.setText(msg.getFormattedTime());
 
-            if (tvSenderName != null) {
-                if (msg.getSenderName() != null && !msg.getSenderName().isEmpty()) {
-                    tvSenderName.setText(msg.getSenderName());
-                    tvSenderName.setVisibility(View.VISIBLE);
+            // Set duration from message
+            if (tvDuration != null) {
+                long durationMs = msg.getDuration();
+                if (durationMs > 0) {
+                    int seconds = (int) (durationMs / 1000) % 60;
+                    int minutes = (int) (durationMs / 1000) / 60;
+                    tvDuration.setText(String.format("%d:%02d", minutes, seconds));
                 } else {
-                    tvSenderName.setVisibility(View.GONE);
+                    tvDuration.setText("0:00");
                 }
             }
 
-            if (ivAvatar != null) {
-                if (msg.getSenderAvatarUrl() != null && !msg.getSenderAvatarUrl().isEmpty()) {
-                    Glide.with(itemView.getContext())
-                            .load(msg.getSenderAvatarUrl())
-                            .circleCrop()
-                            .placeholder(R.drawable.ic_profile)
-                            .error(R.drawable.ic_profile)
-                            .into(ivAvatar);
-                } else {
-                    ivAvatar.setImageResource(R.drawable.ic_profile);
-                }
+            // Play/pause button
+            boolean isPlaying = msg.getMessageId() != null && msg.getMessageId().equals(currentPlayingMessageId);
+            if (fabPlayPause != null) {
+                fabPlayPause.setImageResource(isPlaying ? R.drawable.ic_pause : R.drawable.ic_play);
+                fabPlayPause.setOnClickListener(v -> {
+                    if (msg.getFileUrl() != null && !msg.getFileUrl().isEmpty()) {
+                        playPauseAudio(msg);
+                    }
+                });
             }
 
-            if (msg.getFileUrl() != null && !msg.getFileUrl().isEmpty()) {
-                itemView.setOnClickListener(v -> playAudio(itemView.getContext(), msg.getFileUrl()));
+            // Reset seekbar if not playing
+            if (seekBarAudio != null && !isPlaying) {
+                seekBarAudio.setProgress(0);
             }
 
             itemView.setOnLongClickListener(v -> {
@@ -1036,6 +1059,55 @@ public class MessageAdapter extends RecyclerView.Adapter<RecyclerView.ViewHolder
     }
 
     @SuppressLint("IntentReset")
+    // ==================== AUDIO PLAYBACK ====================
+
+    private void playPauseAudio(Message msg) {
+        String audioUrl = msg.getFileUrl();
+        String messageId = msg.getMessageId();
+
+        if (messageId == null || audioUrl == null) return;
+
+        // If already playing this audio, pause it
+        if (messageId.equals(currentPlayingMessageId)) {
+            audioPlayerManager.pauseAudio();
+            currentPlayingMessageId = null;
+            notifyDataSetChanged();
+            return;
+        }
+
+        // Stop any currently playing audio and start new one
+        audioPlayerManager.stopAudio();
+        currentPlayingMessageId = messageId;
+
+        audioPlayerManager.playAudio(audioUrl, new AudioPlayerManager.PlaybackCallback() {
+            @Override
+            public void onPlaybackStarted() {
+                Log.d(TAG, "Audio playback started");
+                notifyDataSetChanged();
+            }
+
+            @Override
+            public void onPlaybackProgress(int currentPosition, int duration) {
+                // Update seekbar if needed
+            }
+
+            @Override
+            public void onPlaybackCompleted() {
+                Log.d(TAG, "Audio playback completed");
+                currentPlayingMessageId = null;
+                notifyDataSetChanged();
+            }
+
+            @Override
+            public void onPlaybackError(String error) {
+                Log.e(TAG, "Audio playback error: " + error);
+                currentPlayingMessageId = null;
+                Toast.makeText(context, "Cannot play audio: " + error, Toast.LENGTH_SHORT).show();
+                notifyDataSetChanged();
+            }
+        });
+    }
+
     private static void playAudio(Context context, String audioUrl) {
         try {
             Intent intent = new Intent(Intent.ACTION_VIEW);
