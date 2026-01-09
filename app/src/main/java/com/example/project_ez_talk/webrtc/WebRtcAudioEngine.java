@@ -17,6 +17,7 @@ import org.webrtc.MediaStream;
 import org.webrtc.PeerConnection;
 import org.webrtc.PeerConnectionFactory;
 import org.webrtc.RtcCertificatePem;
+import org.webrtc.RtpReceiver;
 import org.webrtc.SdpObserver;
 import org.webrtc.SessionDescription;
 import org.webrtc.SurfaceTextureHelper;
@@ -192,8 +193,11 @@ public class WebRtcAudioEngine {
                         }
 
                         @Override
-                        public void onIceConnectionStateChange(PeerConnection.IceConnectionState iceConnectionState) {
-                            Log.d(TAG, "🌐 ICE state: " + iceConnectionState);
+                        public void onTrackAdded(RtpReceiver receiver) {
+                            Log.d(TAG, "🎵 Track added via RtpReceiver");
+                            if (receiver != null && receiver.track() != null) {
+                                Log.d(TAG, "   Track kind: " + receiver.track().kind());
+                            }
                         }
                     }
             );

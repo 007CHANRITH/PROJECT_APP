@@ -3,8 +3,13 @@ package com.example.project_ez_talk.webrtc;
 import android.content.Context;
 import android.util.Log;
 
+
+import com.google.gson.Gson;
+
 import org.webrtc.AudioSource;
 import org.webrtc.AudioTrack;
+import org.webrtc.Camera2Enumerator;
+import org.webrtc.CameraVideoCapturer;
 import org.webrtc.DefaultVideoDecoderFactory;
 import org.webrtc.DefaultVideoEncoderFactory;
 import org.webrtc.EglBase;
@@ -13,491 +18,213 @@ import org.webrtc.MediaConstraints;
 import org.webrtc.MediaStream;
 import org.webrtc.PeerConnection;
 import org.webrtc.PeerConnectionFactory;
-import org.webrtc.SdpObserver;
 import org.webrtc.SessionDescription;
+import org.webrtc.SurfaceTextureHelper;
+import org.webrtc.SurfaceViewRenderer;
 import org.webrtc.VideoSource;
 import org.webrtc.VideoTrack;
 
 import java.util.ArrayList;
 import java.util.List;
-import java.util.concurrent.ExecutorService;
-import java.util.concurrent.Executors;
 
-/**
- * ✅ FIXED WebRTCClient - Now properly sends SDP offers/answers to Firebase
- */
 public class WebRTCClient {
 
-    private static final String TAG = "WebRTCClient";
-    private static final String AUDIO_TRACK_ID = "ARDAMSa0";
-    private static final String VIDEO_TRACK_ID = "ARDAMSv0";
-    private static final String MEDIA_STREAM_ID = "stream0";
-
-    // WebRTC Components
+    private final Gson gson = new Gson();
+    private final Context context;
+    private final String username;
+    private EglBase.Context eglBaseContext= EglBase.create().getEglBaseContext();
     private PeerConnectionFactory peerConnectionFactory;
     private PeerConnection peerConnection;
-    private AudioSource audioSource;
-    private AudioTrack audioTrack;
-    private VideoSource videoSource;
-    private VideoTrack videoTrack;
+    private List<PeerConnection.IceServer> iceServer = new ArrayList<>();
+    private CameraVideoCapturer videoCapturer;
+    private VideoSource localVideoSource;
+    private AudioSource localAudioSource;
+    private String localTrackId = "local_track";
+    private String localStreamId = "local_stream";
+    private VideoTrack localVideoTrack;
+    private AudioTrack localAudioTrack;
+    private MediaStream localStream;
+    private MediaConstraints mediaConstraints = new MediaConstraints();
 
-    // Observer for callbacks
-    private MyPeerConnectionObserver peerConnectionObserver;
+    public Listener listener;
 
-    // ✅ NEW: Listener for SDP and ICE callbacks
-    private WebRtcListener webRtcListener;
+    public WebRTCClient(Context context, PeerConnection.Observer observer, String username) {
+        this.context = context;
+        this.username = username;
+        initPeerConnectionFactory();
+        peerConnectionFactory = createPeerConnectionFactory();
+        iceServer.add(PeerConnection.IceServer.builder("stun:stun1.l.google.com:19302").createIceServer());
+        iceServer.add(PeerConnection.IceServer.builder("stun:stun2.l.google.com:19302").createIceServer());
+        peerConnection = createPeerConnection(observer);
+        localVideoSource = peerConnectionFactory.createVideoSource(false);
+        localAudioSource = peerConnectionFactory.createAudioSource(new MediaConstraints());
+        mediaConstraints.mandatory.add(new MediaConstraints.KeyValuePair("OfferToReceiveVideo","true"));
+    }
 
-    // ICE Servers
-    private static final List<PeerConnection.IceServer> ICE_SERVERS = new ArrayList<>();
+    //initializing peer connection section
+    private void initPeerConnectionFactory() {
+        PeerConnectionFactory.InitializationOptions options = PeerConnectionFactory.InitializationOptions.builder(context).setFieldTrials("WebRTC-H264HighProfile/Enabled/").setEnableInternalTracer(true).createInitializationOptions();
+        PeerConnectionFactory.initialize(options);
+    }
 
-    static {
-        // ✅ Primary STUN servers (Google - Very reliable)
-        ICE_SERVERS.add(PeerConnection.IceServer.builder("stun:stun.l.google.com:19302").createIceServer());
-        ICE_SERVERS.add(PeerConnection.IceServer.builder("stun:stun1.l.google.com:19302").createIceServer());
-        ICE_SERVERS.add(PeerConnection.IceServer.builder("stun:stun2.l.google.com:19302").createIceServer());
-        ICE_SERVERS.add(PeerConnection.IceServer.builder("stun:stun3.l.google.com:19302").createIceServer());
-        ICE_SERVERS.add(PeerConnection.IceServer.builder("stun:stun4.l.google.com:19302").createIceServer());
+    private PeerConnectionFactory createPeerConnectionFactory() {
+        PeerConnectionFactory.Options options = new PeerConnectionFactory.Options();
+        options.disableEncryption = false;
+        options.disableNetworkMonitor = false;
+        return PeerConnectionFactory.builder()
+                .setVideoEncoderFactory(new DefaultVideoEncoderFactory(eglBaseContext,true,true))
+                .setVideoDecoderFactory(new DefaultVideoDecoderFactory(eglBaseContext))
+                .setOptions(options).createPeerConnectionFactory();
+    }
 
-        // ✅ TURN servers (Multiple ports for maximum reliability)
-        // Port 80 - Works in most corporate networks
-        ICE_SERVERS.add(
-                PeerConnection.IceServer.builder("turn:openrelay.metered.ca:80")
-                        .setUsername("openrelayproject")
-                        .setPassword("openrelayproject")
-                        .createIceServer()
+    private PeerConnection createPeerConnection(PeerConnection.Observer observer){
+        return peerConnectionFactory.createPeerConnection(iceServer,observer);
+    }
+
+    //initilizing ui like surface view renderers
+
+    public void initSurfaceViewRendere(SurfaceViewRenderer viewRenderer){
+        viewRenderer.setEnableHardwareScaler(true);
+        viewRenderer.setMirror(true);
+        viewRenderer.init(eglBaseContext,null);
+    }
+
+    public void initLocalSurfaceView(SurfaceViewRenderer view){
+        initSurfaceViewRendere(view);
+        startLocalVideoStreaming(view);
+    }
+
+    private void startLocalVideoStreaming(SurfaceViewRenderer view) {
+        SurfaceTextureHelper helper= SurfaceTextureHelper.create(
+                Thread.currentThread().getName(), eglBaseContext
         );
 
-        // Port 443 - Works even in restrictive networks (HTTPS port)
-        ICE_SERVERS.add(
-                PeerConnection.IceServer.builder("turn:openrelay.metered.ca:443")
-                        .setUsername("openrelayproject")
-                        .setPassword("openrelayproject")
-                        .createIceServer()
+        videoCapturer = getVideoCapturer();
+        videoCapturer.initialize(helper,context,localVideoSource.getCapturerObserver());
+        videoCapturer.startCapture(480,360,15);
+        localVideoTrack = peerConnectionFactory.createVideoTrack(
+                localTrackId+"_video",localVideoSource
         );
+        localVideoTrack.addSink(view);
 
-        // TCP on port 443 - Ultra-restrictive network fallback
-        ICE_SERVERS.add(
-                PeerConnection.IceServer.builder("turn:openrelay.metered.ca:443?transport=tcp")
-                        .setUsername("openrelayproject")
-                        .setPassword("openrelayproject")
-                        .createIceServer()
-        );
-    }
-    private ExecutorService executor = Executors.newSingleThreadExecutor();
-    private boolean isAudioEnabled = true;
-
-    public void onRemoteSessionReceived(SessionDescription sessionDescription) {
-        Log.d(TAG, "📨 Remote SDP received: " + sessionDescription.type);
-
-        if (peerConnection == null) {
-            Log.e(TAG, "❌ PeerConnection is null! Cannot set remote SDP");
-            return;
-        }
-
-        addRemoteSdp(sessionDescription);
+        localAudioTrack = peerConnectionFactory.createAudioTrack(localTrackId+"_audio",localAudioSource);
+        localStream = peerConnectionFactory.createLocalMediaStream(localStreamId);
+        localStream.addTrack(localVideoTrack);
+        localStream.addTrack(localAudioTrack);
+        peerConnection.addTrack(localVideoTrack, java.util.Collections.singletonList(localStreamId));
+        peerConnection.addTrack(localAudioTrack, java.util.Collections.singletonList(localStreamId));
+        Log.d("WebRTCClient", "✅ Local tracks added to peer connection");
     }
 
-    public void answer(String sender) {
-        Log.d(TAG, "📤 Creating ANSWER for sender: " + sender);
+    private CameraVideoCapturer getVideoCapturer() {
+        Camera2Enumerator enumerator = new Camera2Enumerator(context);
 
-        if (peerConnection == null) {
-            Log.e(TAG, "❌ PeerConnection is null! Cannot answer");
-            return;
-        }
+        String[] deviceNames = enumerator.getDeviceNames();
 
-        createAnswer();
-    }
-
-
-    /**
-     * ✅ NEW: Listener interface for SDP and ICE callbacks
-     */
-    public interface WebRtcListener {
-        void onLocalSdpGenerated(SessionDescription sdp);
-        void onIceCandidateGenerated(IceCandidate candidate);
-    }
-
-    /**
-     * Constructor
-     */
-    public WebRTCClient(Context context, MyPeerConnectionObserver observer) {
-        Log.d(TAG, "🎤 Initializing WebRTCClient...");
-        this.peerConnectionObserver = observer;
-        initializePeerConnectionFactory(context);
-    }
-
-    /**
-     * ✅ NEW: Set listener for SDP/ICE callbacks
-     */
-    public void setWebRtcListener(WebRtcListener listener) {
-        this.webRtcListener = listener;
-        Log.d(TAG, "✅ WebRtcListener set");
-    }
-
-    /**
-     * Initialize PeerConnectionFactory
-     */
-    private void initializePeerConnectionFactory(Context context) {
-        try {
-            PeerConnectionFactory.InitializationOptions initializationOptions =
-                    PeerConnectionFactory.InitializationOptions.builder(context)
-                            .setEnableInternalTracer(true)
-                            .setFieldTrials("WebRTC-Audio-Processing/Enabled/")
-                            .createInitializationOptions();
-
-            PeerConnectionFactory.initialize(initializationOptions);
-
-            EglBase eglBase = EglBase.create();
-            DefaultVideoEncoderFactory encoderFactory = new DefaultVideoEncoderFactory(
-                    eglBase.getEglBaseContext(), true, true
-            );
-
-            DefaultVideoDecoderFactory decoderFactory = new DefaultVideoDecoderFactory(
-                    eglBase.getEglBaseContext()
-            );
-
-            peerConnectionFactory = PeerConnectionFactory.builder()
-                    .setVideoEncoderFactory(encoderFactory)
-                    .setVideoDecoderFactory(decoderFactory)
-                    .createPeerConnectionFactory();
-
-            Log.d(TAG, "✅ PeerConnectionFactory initialized");
-
-        } catch (Exception e) {
-            Log.e(TAG, "❌ Factory initialization error: " + e.getMessage(), e);
-        }
-    }
-
-    /**
-     * ✅ Create PeerConnection
-     */
-    public void createPeerConnection() {
-        Log.d(TAG, "🔗 Creating PeerConnection...");
-
-        try {
-            // Create audio source with echo cancellation
-            MediaConstraints audioConstraints = new MediaConstraints();
-            audioConstraints.mandatory.add(new MediaConstraints.KeyValuePair("echoCancellation", "true"));
-            audioConstraints.mandatory.add(new MediaConstraints.KeyValuePair("noiseSuppression", "true"));
-            audioConstraints.mandatory.add(new MediaConstraints.KeyValuePair("autoGainControl", "true"));
-
-            audioSource = peerConnectionFactory.createAudioSource(audioConstraints);
-            audioTrack = peerConnectionFactory.createAudioTrack(AUDIO_TRACK_ID, audioSource);
-            audioTrack.setEnabled(true);
-
-            Log.d(TAG, "✅ Audio source and track created");
-
-            // Create PeerConnection with ICE servers
-            PeerConnection.RTCConfiguration rtcConfig = new PeerConnection.RTCConfiguration(ICE_SERVERS);
-            rtcConfig.enableDscp = true;
-            rtcConfig.sdpSemantics = PeerConnection.SdpSemantics.UNIFIED_PLAN;
-
-            peerConnection = peerConnectionFactory.createPeerConnection(rtcConfig, peerConnectionObserver);
-
-            if (peerConnection == null) {
-                throw new Exception("Failed to create PeerConnection");
+        for (String device: deviceNames){
+            if (enumerator.isFrontFacing(device)){
+                return enumerator.createCapturer(device,null);
             }
-
-            Log.d(TAG, "✅ PeerConnection created");
-
-            // Add audio track to connection
-            peerConnection.addTrack(audioTrack);
-            Log.d(TAG, "✅ Audio track added to PeerConnection");
-
-        } catch (Exception e) {
-            Log.e(TAG, "❌ PeerConnection creation error: " + e.getMessage(), e);
         }
+        throw new IllegalStateException("front facing camera not found");
     }
 
-    /**
-     * ✅ FIXED: Create SDP Offer - Now sends to Firebase via listener
-     */
-    public void createOffer() {
-        Log.d(TAG, "📤 Creating SDP Offer...");
+    public void initRemoteSurfaceView(SurfaceViewRenderer view){
+        initSurfaceViewRendere(view);
+    }
 
-
-        if (peerConnection == null) {
-            Log.e(TAG, "❌ PeerConnection is null!");
-            return;
-        }
-
-        MediaConstraints constraints = new MediaConstraints();
-        constraints.mandatory.add(
-                new MediaConstraints.KeyValuePair("OfferToReceiveAudio", "true")
-        );
-        constraints.mandatory.add(
-                new MediaConstraints.KeyValuePair("OfferToReceiveVideo", "false")
-        );
-
-        executor.execute(() -> {
-
-            peerConnection.createOffer(new SdpObserver() {
+    //negotiation section like call and answer
+    public void call(String target){
+        try{
+            peerConnection.createOffer(new MySdpObserver(){
                 @Override
                 public void onCreateSuccess(SessionDescription sessionDescription) {
-                    Log.d(TAG, "✅ Offer created");
-
-                    // Set local description first
-                    peerConnection.setLocalDescription(new SdpObserver() {
-                        @Override
-                        public void onCreateSuccess(SessionDescription sessionDescription) {}
-
+                    super.onCreateSuccess(sessionDescription);
+                    peerConnection.setLocalDescription(new MySdpObserver(){
                         @Override
                         public void onSetSuccess() {
-                            Log.d(TAG, "✅ Local description set");
-
-                            // ✅ NOW SEND TO FIREBASE via listener
-                            if (webRtcListener != null) {
-                                webRtcListener.onLocalSdpGenerated(sessionDescription);
-                                Log.d(TAG, "📤 Offer sent to Firebase via listener");
-                            } else {
-                                Log.e(TAG, "❌ WebRtcListener is null! Cannot send offer");
+                            super.onSetSuccess();
+                            //its time to transfer this sdp to other peer
+                            if (listener!=null){
+                                listener.onTransferDataToOtherPeer(new DataModel(
+                                        target,username,sessionDescription.description, DataModelType.Offer
+                                ));
                             }
                         }
-
-                        @Override
-                        public void onCreateFailure(String error) {
-                            Log.e(TAG, "❌ Set local description failed: " + error);
-                        }
-
-                        @Override
-                        public void onSetFailure(String error) {
-                            Log.e(TAG, "❌ Set local description failed: " + error);
-                        }
-                    }, sessionDescription);
+                    },sessionDescription);
                 }
-
-                @Override
-                public void onSetSuccess() {}
-
-                @Override
-                public void onCreateFailure(String error) {
-                    Log.e(TAG, "❌ Create offer failed: " + error);
-                }
-
-                @Override
-                public void onSetFailure(String error) {}
-            }, constraints);
-        });
+            },mediaConstraints);
+        }catch (Exception e){
+            e.printStackTrace();
+        }
     }
 
-    /**
-     * ✅ FIXED: Create SDP Answer - Now sends to Firebase via listener
-     */
-    public void createAnswer() {
-        Log.d(TAG, "📥 Creating SDP Answer...");
-
-        if (peerConnection == null) {
-            Log.e(TAG, "❌ PeerConnection is null!");
-            return;
-        }
-
-        MediaConstraints constraints = new MediaConstraints();
-        constraints.mandatory.add(new MediaConstraints.KeyValuePair("OfferToReceiveAudio", "true"));
-        constraints.mandatory.add(new MediaConstraints.KeyValuePair("OfferToReceiveVideo", "false"));
-
-        executor.execute(() -> {
-            peerConnection.createAnswer(new SdpObserver() {
+    public void answer(String target){
+        try{
+            peerConnection.createAnswer(new MySdpObserver(){
                 @Override
                 public void onCreateSuccess(SessionDescription sessionDescription) {
-                    Log.d(TAG, "✅ Answer created");
-
-                    // Set local description first
-                    peerConnection.setLocalDescription(new SdpObserver() {
-                        @Override
-                        public void onCreateSuccess(SessionDescription sessionDescription) {}
-
+                    super.onCreateSuccess(sessionDescription);
+                    peerConnection.setLocalDescription(new MySdpObserver(){
                         @Override
                         public void onSetSuccess() {
-                            Log.d(TAG, "✅ Local description set");
-
-                            // ✅ NOW SEND TO FIREBASE via listener
-                            if (webRtcListener != null) {
-                                webRtcListener.onLocalSdpGenerated(sessionDescription);
-                                Log.d(TAG, "📤 Answer sent to Firebase via listener");
-                            } else {
-                                Log.e(TAG, "❌ WebRtcListener is null! Cannot send answer");
+                            super.onSetSuccess();
+                            //its time to transfer this sdp to other peer
+                            if (listener!=null){
+                                listener.onTransferDataToOtherPeer(new DataModel(
+                                        target,username,sessionDescription.description, DataModelType.Answer
+                                ));
                             }
                         }
-
-                        @Override
-                        public void onCreateFailure(String error) {
-                            Log.e(TAG, "❌ Set local description failed: " + error);
-                        }
-
-                        @Override
-                        public void onSetFailure(String error) {
-                            Log.e(TAG, "❌ Set local description failed: " + error);
-                        }
-                    }, sessionDescription);
+                    },sessionDescription);
                 }
-
-                @Override
-                public void onSetSuccess() {}
-
-                @Override
-                public void onCreateFailure(String error) {
-                    Log.e(TAG, "❌ Create answer failed: " + error);
-                }
-
-                @Override
-                public void onSetFailure(String error) {}
-            }, constraints);
-        });
-    }
-
-    /**
-     * Add remote SDP
-     */
-    public void addRemoteSdp(SessionDescription sdp) {
-        Log.d(TAG, "📨 Adding remote SDP: " + sdp.type);
-
-        if (peerConnection == null) {
-            Log.e(TAG, "❌ PeerConnection is null!");
-            return;
-        }
-
-        executor.execute(() -> {
-            peerConnection.setRemoteDescription(new SdpObserver() {
-                @Override
-                public void onCreateSuccess(SessionDescription sessionDescription) {}
-
-                @Override
-                public void onSetSuccess() {
-                    Log.d(TAG, "✅ Remote SDP set successfully");
-                }
-
-                @Override
-                public void onCreateFailure(String error) {}
-
-                @Override
-                public void onSetFailure(String error) {
-                    Log.e(TAG, "❌ Set remote description failed: " + error);
-                }
-            }, sdp);
-        });
-    }
-
-    /**
-     * Add ICE Candidate
-     */
-    public void addIceCandidate(IceCandidate candidate) {
-        Log.d(TAG, "🎯 Adding ICE candidate");
-        if (peerConnection != null) {
-            peerConnection.addIceCandidate(candidate);
+            },mediaConstraints);
+        }catch (Exception e){
+            e.printStackTrace();
         }
     }
 
-    /**
-     * ✅ Send ICE candidate via listener
-     */
-    public void sendIceCandidate(IceCandidate candidate, String target) {
-        Log.d(TAG, "📤 Sending ICE candidate");
+    public void onRemoteSessionReceived(SessionDescription sessionDescription){
+        peerConnection.setRemoteDescription(new MySdpObserver(),sessionDescription);
+    }
 
-        // Add to local peer connection
-        addIceCandidate(candidate);
+    public void addIceCandidate(IceCandidate iceCandidate){
+        peerConnection.addIceCandidate(iceCandidate);
+    }
 
-        // Send to remote peer via listener
-        if (webRtcListener != null) {
-            webRtcListener.onIceCandidateGenerated(candidate);
+    public void sendIceCandidate(IceCandidate iceCandidate, String target){
+        addIceCandidate(iceCandidate);
+        if (listener!=null){
+            listener.onTransferDataToOtherPeer(new DataModel(
+                    target,username,gson.toJson(iceCandidate),DataModelType.IceCandidate
+            ));
         }
     }
 
-    /**
-     * Toggle audio
-     */
-    public void toggleAudio(boolean enabled) {
-        Log.d(TAG, "🎤 Audio: " + (enabled ? "ENABLED" : "MUTED"));
-        isAudioEnabled = enabled;
-
-        if (audioTrack != null) {
-            audioTrack.setEnabled(enabled);
-        }
-    }
-
-    public boolean isAudioEnabled() {
-        return isAudioEnabled;
-    }
-
-    /**
-     * Close connection
-     */
-    public void close() {
-        Log.d(TAG, "🔌 Closing WebRTC connection...");
-
-        if (audioTrack != null) {
-            audioTrack.dispose();
-            audioTrack = null;
-        }
-
-        if (audioSource != null) {
-            audioSource.dispose();
-            audioSource = null;
-        }
-
-        if (videoTrack != null) {
-            videoTrack.dispose();
-            videoTrack = null;
-        }
-
-        if (videoSource != null) {
-            videoSource.dispose();
-            videoSource = null;
-        }
-
-        if (peerConnection != null) {
-            peerConnection.close();
-            peerConnection = null;
-        }
-
-        if (executor != null && !executor.isShutdown()) {
-            executor.shutdown();
-        }
-
-        Log.d(TAG, "✅ WebRTC connection closed");
-    }
-
-    public PeerConnection getPeerConnection() {
-        return peerConnection;
-    }
-
-    public PeerConnectionFactory getPeerConnectionFactory() {
-        return peerConnectionFactory;
-    }
-
-    /**
-     * ✅ Initialize local video view for rendering
-     */
-    public void initLocalView(Object localView) {
-        Log.d(TAG, "📱 Initializing local view...");
-        // SurfaceViewRenderer binding handled by MainRepository
-    }
-
-    /**
-     * ✅ Initialize remote video view for rendering
-     */
-    public void initRemoteView(Object remoteView) {
-        Log.d(TAG, "📱 Initializing remote view...");
-        // SurfaceViewRenderer binding handled by MainRepository
-    }
-
-    /**
-     * ✅ Switch camera (front/back) - Currently not implemented
-     */
     public void switchCamera() {
-        Log.d(TAG, "📷 Camera switch requested (not yet implemented)");
+        videoCapturer.switchCamera(null);
     }
 
-    /**
-     * ✅ Toggle video on/off
-     */
-    public void toggleVideo(Boolean shouldBeOn) {
-        if (videoTrack != null) {
-            videoTrack.setEnabled(shouldBeOn);
-            Log.d(TAG, "📹 Video toggled: " + (shouldBeOn ? "ON" : "OFF"));
-        } else {
-            Log.w(TAG, "⚠️ Video track not available");
+    public void toggleVideo(Boolean shouldBeMuted){
+        localVideoTrack.setEnabled(shouldBeMuted);
+    }
+
+    public void toggleAudio(Boolean shouldBeMuted){
+        localAudioTrack.setEnabled(shouldBeMuted);
+    }
+
+    public void closeConnection(){
+        try{
+            localVideoTrack.dispose();
+            videoCapturer.stopCapture();
+            videoCapturer.dispose();
+            peerConnection.close();
+        }catch (Exception e){
+            e.printStackTrace();
         }
     }
 
-    public interface Listener {}
+    public interface Listener {
+        void onTransferDataToOtherPeer(DataModel model);
+    }
 }
