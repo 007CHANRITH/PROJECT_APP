@@ -54,10 +54,19 @@ public class ChatAdapter extends RecyclerView.Adapter<ChatAdapter.ChatViewHolder
         holder.tvName.setText(chat.getName() != null && !chat.getName().isEmpty()
                 ? chat.getName() : "Unknown User");
 
-        // Last message
+        // Last message with type indicator
         String lastMsg = chat.getLastMessage();
-        holder.tvLastMessage.setText(lastMsg != null && !lastMsg.isEmpty()
-                ? lastMsg : "No messages yet");
+        String lastMsgType = chat.getLastMessageType();
+        
+        // 🔍 DEBUG: Log the values
+        android.util.Log.d("ChatAdapter", "💬 Chat: " + chat.getName());
+        android.util.Log.d("ChatAdapter", "   Message: " + lastMsg);
+        android.util.Log.d("ChatAdapter", "   Type: " + lastMsgType);
+        
+        String displayMessage = formatLastMessage(lastMsg, lastMsgType);
+        android.util.Log.d("ChatAdapter", "   Display: " + displayMessage);
+        
+        holder.tvLastMessage.setText(displayMessage);
 
         // Time
         holder.tvTime.setText(chat.getFormattedTime());
@@ -107,6 +116,38 @@ public class ChatAdapter extends RecyclerView.Adapter<ChatAdapter.ChatViewHolder
     public void addChat(Chat chat) {
         chatList.add(0, chat); // Add to top
         notifyItemInserted(0);
+    }
+
+    /**
+     * Format last message based on message type
+     * Shows emoji icons for media messages, text preview for text messages
+     */
+    private String formatLastMessage(String message, String messageType) {
+        // If no message at all, show default text
+        if (message == null || message.isEmpty()) {
+            return "No messages yet";
+        }
+
+        // If messageType is null, treat as TEXT (for backwards compatibility with old messages)
+        if (messageType == null) {
+            messageType = "TEXT";
+        }
+
+        // Handle different message types
+        switch (messageType.toUpperCase()) {
+            case "VOICE":
+                return "🎤 Voice message";
+            case "IMAGE":
+                return "📷 Photo";
+            case "LOCATION":
+                return "📍 Location";
+            case "FILE":
+                return "📄 File";
+            case "TEXT":
+            default:
+                // For text messages, show the actual message content
+                return message;
+        }
     }
 
     static class ChatViewHolder extends RecyclerView.ViewHolder {

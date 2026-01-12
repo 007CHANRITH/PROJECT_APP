@@ -26,8 +26,10 @@ import com.google.android.material.floatingactionbutton.FloatingActionButton;
 import com.google.firebase.auth.FirebaseAuth;
 import com.google.firebase.auth.FirebaseUser;
 import com.google.firebase.auth.UserProfileChangeRequest;
-import com.google.firebase.database.DatabaseReference;
-import com.google.firebase.database.FirebaseDatabase;
+import com.google.firebase.firestore.FirebaseFirestore;
+
+import java.util.HashMap;
+import java.util.Map;
 
 @SuppressWarnings("ALL")
 public class EditProfileActivity extends BaseActivity {
@@ -44,8 +46,9 @@ public class EditProfileActivity extends BaseActivity {
 
     private FirebaseAuth mAuth;
     private FirebaseUser currentUser;
-    private DatabaseReference usersRef;
+    private FirebaseFirestore db;
     private Uri selectedImageUri;
+    private String currentProfileImageUrl;
     private ActivityResultLauncher<String> imagePickerLauncher;
 
     @Override
@@ -55,7 +58,10 @@ public class EditProfileActivity extends BaseActivity {
 
         mAuth = FirebaseAuth.getInstance();
         currentUser = mAuth.getCurrentUser();
-        usersRef = FirebaseDatabase.getInstance().getReference("users");
+        db = FirebaseFirestore.getInstance();
+        
+        // Initialize SupabaseStorageManager
+        SupabaseStorageManager.init(this);
 
         initViews();
         setupImagePicker();
@@ -103,28 +109,62 @@ public class EditProfileActivity extends BaseActivity {
 
     @SuppressLint("SetTextI18n")
     private void loadUserData() {
-        if (currentUser != null) {
-            // Load from Firebase
-            String displayName = currentUser.getDisplayName();
-            String email = currentUser.getEmail();
+        if (currentUser == null) return;
 
-            etFullName.setText(displayName != null ? displayName : "");
-            etEmail.setText(email != null ? email : "");
-        }
+        // Load from Firestore
+        db.collection("users")
+                .document(currentUser.getUid())
+                .get()
+                .addOnSuccessListener(documentSnapshot -> {
+                    if (documentSnapshot.exists()) {
+                        String name = documentSnapshot.getString("name");
+                        String email = documentSnapshot.getString("email");
+                        String phone = documentSnapshot.getString("phone");
+                        String status = documentSnapshot.getString("status");
+                        String profilePic = documentSnapshot.getString("profilePicture");
 
-        // Load from preferences
-        String username = Preferences.getUsername(this);
-        String phone = Preferences.getUserPhone(this);
+                        // Set text fields
+                        if (name != null && !name.isEmpty()) {
+                            etFullName.setText(name);
+                        }
+                        if (email != null && !email.isEmpty()) {
+                            etEmail.setText(email);
+                        }
+                        if (phone != null && !phone.isEmpty()) {
+                            etPhone.setText(phone);
+                        }
+                        if (status != null && !status.isEmpty()) {
+                            etStatus.setText(status);
+                        } else {
+                            etStatus.setText("Hey there! I'm using EZ Talk");
+                        }
 
-        if (username != null && !username.isEmpty()) {
-            etUsername.setText(username);
-        }
-        if (phone != null && !phone.isEmpty()) {
-            etPhone.setText(phone);
-        }
+                        // Load profile picture
+                        if (profilePic != null && !profilePic.isEmpty()) {
+                            currentProfileImageUrl = profilePic;
+                            Glide.with(this)
+                                    .load(profilePic)
+                                    .circleCrop()
+                                    .placeholder(R.drawable.ic_profile)
+                                    .into(ivProfilePicture);
+                        }
+                    }
+                })
+                .addOnFailureListener(e -> {
+                    Log.e(TAG, "Failed to load user data", e);
+                    // Fallback to Firebase Auth
+                    if (currentUser != null) {
+                        String displayName = currentUser.getDisplayName();
+                        String email = currentUser.getEmail();
 
-        // Status is local only for now
-        etStatus.setText("Hey there! I'm using EZ Talk");
+                        if (displayName != null && !displayName.isEmpty()) {
+                            etFullName.setText(displayName);
+                        }
+                        if (email != null && !email.isEmpty()) {
+                            etEmail.setText(email);
+                        }
+                    }
+                });
     }
 
     private void saveProfile() {
@@ -173,7 +213,7 @@ public class EditProfileActivity extends BaseActivity {
     }
 
     /**
-     * Upload image to Supabase, then save profile
+     * Upload image to Supabase Storage, then save profile
      */
     private void uploadImageAndSaveProfile(String fullName, String username,
                                            String email, String phone, String status) {
@@ -185,20 +225,24 @@ public class EditProfileActivity extends BaseActivity {
 
         String userId = currentUser.getUid();
 
+        Log.d(TAG, "📤 Uploading image to Supabase Storage...");
+
         SupabaseStorageManager.uploadProfileImage(
                 selectedImageUri,
                 userId,
                 new SupabaseStorageManager.UploadCallback() {
                     @Override
                     public void onSuccess(String publicUrl) {
-                        Log.d(TAG, "Image uploaded: " + publicUrl);
-                        // ✅ Skip Firebase Auth update, go straight to saving
+                        Log.d(TAG, "✅ Image uploaded successfully!");
+                        Log.d(TAG, "📥 Public URL: " + publicUrl);
+
+                        // Save profile with image URL
                         saveProfileData(fullName, username, email, phone, status, publicUrl);
                     }
 
                     @Override
                     public void onError(String error) {
-                        Log.e(TAG, "Image upload failed: " + error);
+                        Log.e(TAG, "❌ Image upload failed: " + error);
                         showLoading(false);
                         Toast.makeText(EditProfileActivity.this,
                                 "Failed to upload image: " + error,
@@ -209,7 +253,7 @@ public class EditProfileActivity extends BaseActivity {
     }
 
     /**
-     * Save all profile data (simplified version)
+     * Save all profile data to Firestore
      */
     private void saveProfileData(String fullName, String username,
                                  String email, String phone, String status, String imageUrl) {
@@ -220,21 +264,43 @@ public class EditProfileActivity extends BaseActivity {
 
         String userId = currentUser.getUid();
 
-        // Update Firebase Auth display name only (skip photo URI)
-        UserProfileChangeRequest profileUpdates = new UserProfileChangeRequest.Builder()
-                .setDisplayName(fullName)
-                .build();
+        // Prepare data for Firestore
+        Map<String, Object> userData = new HashMap<>();
+        userData.put("name", fullName);
+        userData.put("email", email);
+        userData.put("phone", phone);
+        userData.put("status", status);
+        if (imageUrl != null) {
+            userData.put("profilePicture", imageUrl);
+        }
+        userData.put("updatedAt", System.currentTimeMillis());
 
-        currentUser.updateProfile(profileUpdates)
-                .addOnCompleteListener(task -> {
-                    // Continue regardless of success/failure
-                    // Save to Firebase Realtime Database
+        Log.d(TAG, "💾 Saving profile to Firestore...");
+
+        // Save to Firestore
+        db.collection("users")
+                .document(userId)
+                .update(userData)
+                .addOnSuccessListener(aVoid -> {
+                    Log.d(TAG, "✅ Profile saved to Firestore!");
+
+                    // Also update Firebase Auth display name
+                    UserProfileChangeRequest.Builder profileBuilder = new UserProfileChangeRequest.Builder()
+                            .setDisplayName(fullName);
+                    
                     if (imageUrl != null) {
-                        usersRef.child(userId).child("profileImageUrl").setValue(imageUrl);
+                        profileBuilder.setPhotoUri(Uri.parse(imageUrl));
                     }
 
+                    currentUser.updateProfile(profileBuilder.build())
+                            .addOnCompleteListener(task -> {
+                                if (task.isSuccessful()) {
+                                    Log.d(TAG, "✅ Firebase Auth profile updated!");
+                                }
+                            });
+
                     // Save to SharedPreferences
-                    Preferences.setUsername(this, username);
+                    Preferences.setUsername(this, fullName);
                     Preferences.setUserEmail(this, email);
                     Preferences.setUserPhone(this, phone);
                     if (imageUrl != null) {
@@ -242,38 +308,24 @@ public class EditProfileActivity extends BaseActivity {
                     }
 
                     showLoading(false);
-                    Toast.makeText(this, "Profile updated successfully!", Toast.LENGTH_SHORT).show();
+                    Toast.makeText(this, "✅ Profile updated successfully!", Toast.LENGTH_SHORT).show();
                     setResult(RESULT_OK);
                     finish();
+                })
+                .addOnFailureListener(e -> {
+                    Log.e(TAG, "❌ Failed to save profile", e);
+                    showLoading(false);
+                    Toast.makeText(this, "Failed to update profile: " + e.getMessage(), Toast.LENGTH_SHORT).show();
                 });
     }
 
     /**
-     * Update profile without image
+     * Update profile without image (use existing image if available)
      */
     private void updateProfileWithoutImage(String fullName, String username,
                                            String email, String phone, String status) {
-        if (currentUser == null) {
-            showLoading(false);
-            return;
-        }
-
-        UserProfileChangeRequest profileUpdates = new UserProfileChangeRequest.Builder()
-                .setDisplayName(fullName)
-                .build();
-
-        currentUser.updateProfile(profileUpdates)
-                .addOnCompleteListener(task -> {
-                    // Save to SharedPreferences
-                    Preferences.setUsername(this, username);
-                    Preferences.setUserEmail(this, email);
-                    Preferences.setUserPhone(this, phone);
-
-                    showLoading(false);
-                    Toast.makeText(this, "Profile updated successfully!", Toast.LENGTH_SHORT).show();
-                    setResult(RESULT_OK);
-                    finish();
-                });
+        // Use existing profile image URL if available
+        saveProfileData(fullName, username, email, phone, status, currentProfileImageUrl);
     }
 
     private void showLoading(boolean loading) {

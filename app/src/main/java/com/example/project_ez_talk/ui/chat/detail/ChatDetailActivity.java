@@ -527,6 +527,7 @@ public class ChatDetailActivity extends BaseActivity {
         chatDataCurrent.put("name", receiverName != null ? receiverName : "Unknown");
         chatDataCurrent.put("avatarUrl", receiverAvatar != null ? receiverAvatar : "");
         chatDataCurrent.put("lastMessage", "");
+        chatDataCurrent.put("lastMessageType", "TEXT");
         chatDataCurrent.put("lastMessageTimestamp", timestamp);
         chatDataCurrent.put("unreadCount", 0);
 
@@ -535,6 +536,7 @@ public class ChatDetailActivity extends BaseActivity {
         chatDataReceiver.put("name", currentUserName);
         chatDataReceiver.put("avatarUrl", currentUserAvatar);
         chatDataReceiver.put("lastMessage", "");
+        chatDataReceiver.put("lastMessageType", "TEXT");
         chatDataReceiver.put("lastMessageTimestamp", timestamp);
         chatDataReceiver.put("unreadCount", 0);
 
@@ -757,14 +759,17 @@ public class ChatDetailActivity extends BaseActivity {
                 .addOnSuccessListener(ref -> {
                     Log.d(TAG, "✅ Message saved");
                     etMessage.setText("");
-                    updateChatListBothUsers(messageText);
+                    updateChatListBothUsers(messageText, "TEXT");
 
+                    // Send notification with message type and avatar
                     MessageNotificationManager.sendMessageNotification(
                             receiverId,
                             currentUserName,
                             messageText,
+                            "TEXT",
                             chatId,
-                            currentUser.getUid()
+                            currentUser.getUid(),
+                            currentUserAvatar
                     );
                 })
                 .addOnFailureListener(e -> {
@@ -772,11 +777,19 @@ public class ChatDetailActivity extends BaseActivity {
                 });
     }
 
-    private void updateChatListBothUsers(String messagePreview) {
+    private void updateChatListBothUsers(String messagePreview, String messageType) {
         long timestamp = System.currentTimeMillis();
+        
+        // 🔍 DEBUG: Log what we're saving
+        Log.d(TAG, "💾 Updating chat list:");
+        Log.d(TAG, "   Message: " + messagePreview);
+        Log.d(TAG, "   Type: " + messageType);
+        Log.d(TAG, "   Current user: " + currentUser.getUid());
+        Log.d(TAG, "   Receiver: " + receiverId);
 
         Map<String, Object> chatDataCurrent = new HashMap<>();
         chatDataCurrent.put("lastMessage", messagePreview);
+        chatDataCurrent.put("lastMessageType", messageType);
         chatDataCurrent.put("lastMessageTimestamp", timestamp);
         chatDataCurrent.put("unreadCount", 0);
 
@@ -784,10 +797,13 @@ public class ChatDetailActivity extends BaseActivity {
                 .document(currentUser.getUid())
                 .collection("chats")
                 .document(chatId)
-                .update(chatDataCurrent);
+                .update(chatDataCurrent)
+                .addOnSuccessListener(aVoid -> Log.d(TAG, "✅ Current user chat updated"))
+                .addOnFailureListener(e -> Log.e(TAG, "❌ Failed to update current user chat: " + e.getMessage()));
 
         Map<String, Object> chatDataReceiver = new HashMap<>();
         chatDataReceiver.put("lastMessage", messagePreview);
+        chatDataReceiver.put("lastMessageType", messageType);
         chatDataReceiver.put("lastMessageTimestamp", timestamp);
         chatDataReceiver.put("unreadCount", com.google.firebase.firestore.FieldValue.increment(1));
 
@@ -795,7 +811,9 @@ public class ChatDetailActivity extends BaseActivity {
                 .document(receiverId)
                 .collection("chats")
                 .document(chatId)
-                .update(chatDataReceiver);
+                .update(chatDataReceiver)
+                .addOnSuccessListener(aVoid -> Log.d(TAG, "✅ Receiver chat updated"))
+                .addOnFailureListener(e -> Log.e(TAG, "❌ Failed to update receiver chat: " + e.getMessage()));
     }
 
     // ============================================================
@@ -1010,14 +1028,17 @@ public class ChatDetailActivity extends BaseActivity {
         messagesRef.add(message)
                 .addOnSuccessListener(ref -> {
                     Log.d(TAG, "✅ Voice message sent successfully!");
-                    updateChatListBothUsers("🎤 Voice message");
+                    updateChatListBothUsers("🎤 Voice message", "VOICE");
 
+                    // Send notification for voice message
                     MessageNotificationManager.sendMessageNotification(
                             receiverId,
                             currentUserName,
-                            "🎤 Voice message",
+                            "Voice message",
+                            "AUDIO",
                             chatId,
-                            currentUser.getUid()
+                            currentUser.getUid(),
+                            currentUserAvatar
                     );
                 })
                 .addOnFailureListener(e -> {
@@ -1171,7 +1192,7 @@ public class ChatDetailActivity extends BaseActivity {
 
         messagesRef.add(message)
                 .addOnSuccessListener(ref -> {
-                    updateChatListBothUsers("[Image]");
+                    updateChatListBothUsers("[Image]", "IMAGE");
                     Toast.makeText(this, "Image sent", Toast.LENGTH_SHORT).show();
                 })
                 .addOnFailureListener(e -> Toast.makeText(this, "Failed to send image", Toast.LENGTH_SHORT).show());
@@ -1268,7 +1289,7 @@ public class ChatDetailActivity extends BaseActivity {
         messagesRef.add(message)
                 .addOnSuccessListener(ref -> {
                     Log.d(TAG, "✅ Document message saved");
-                    updateChatListBothUsers("[Document: " + fileName + "]");
+                    updateChatListBothUsers("[Document: " + fileName + "]", "FILE");
                     Toast.makeText(this, "Document sent successfully", Toast.LENGTH_SHORT).show();
                 })
                 .addOnFailureListener(e -> {
@@ -1384,7 +1405,7 @@ public class ChatDetailActivity extends BaseActivity {
         messagesRef.add(message)
                 .addOnSuccessListener(ref -> {
                     Log.d(TAG, "✅ Audio message saved to Firebase");
-                    updateChatListBothUsers("[Audio]");
+                    updateChatListBothUsers("[Audio]", "FILE");
                     Toast.makeText(this, "Audio sent successfully", Toast.LENGTH_SHORT).show();
                 })
                 .addOnFailureListener(e -> {
@@ -1503,7 +1524,7 @@ public class ChatDetailActivity extends BaseActivity {
         messagesRef.add(message)
                 .addOnSuccessListener(ref -> {
                     Log.d(TAG, "✅ Video message saved to Firebase");
-                    updateChatListBothUsers("[Video]");
+                    updateChatListBothUsers("[Video]", "FILE");
                     Toast.makeText(this, "Video sent successfully", Toast.LENGTH_SHORT).show();
                 })
                 .addOnFailureListener(e -> {
@@ -1557,7 +1578,7 @@ public class ChatDetailActivity extends BaseActivity {
                 messagesRef.add(message)
                         .addOnSuccessListener(ref -> {
                             Log.d(TAG, "✅ LOCATION message saved");
-                            updateChatListBothUsers("[Location]");
+                            updateChatListBothUsers("[Location]", "LOCATION");
                         })
                         .addOnFailureListener(e -> {
                             Log.e(TAG, "❌ Failed to save location message");
@@ -1623,7 +1644,7 @@ public class ChatDetailActivity extends BaseActivity {
         messagesRef.add(message)
                 .addOnSuccessListener(ref -> {
                     Log.d(TAG, "✅ CONTACT message saved");
-                    updateChatListBothUsers("[Contact: " + contactName + "]");
+                    updateChatListBothUsers("[Contact: " + contactName + "]", "FILE");
                 })
                 .addOnFailureListener(e -> {
                     Log.e(TAG, "❌ Failed to save contact message");

@@ -2,6 +2,7 @@ package com.example.project_ez_talk.fragment;
 
 import android.content.Intent;
 import android.os.Bundle;
+import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
@@ -100,11 +101,31 @@ public class ProfileFragment extends Fragment {
 
                         // Load profile picture
                         if (profilePic != null && !profilePic.isEmpty() && ivProfilePicture != null) {
+                            Log.d("ProfileFragment", "📸 Loading profile picture: " + profilePic);
                             Glide.with(this)
                                     .load(profilePic)
                                     .circleCrop()
                                     .placeholder(R.drawable.ic_profile)
+                                    .error(R.drawable.ic_profile)
+                                    .listener(new com.bumptech.glide.request.RequestListener<android.graphics.drawable.Drawable>() {
+                                        @Override
+                                        public boolean onLoadFailed(@androidx.annotation.Nullable com.bumptech.glide.load.engine.GlideException e, Object model, com.bumptech.glide.request.target.Target<android.graphics.drawable.Drawable> target, boolean isFirstResource) {
+                                            Log.e("ProfileFragment", "❌ Failed to load profile image", e);
+                                            if (e != null) {
+                                                Log.e("ProfileFragment", "Error: " + e.getMessage());
+                                            }
+                                            return false;
+                                        }
+
+                                        @Override
+                                        public boolean onResourceReady(android.graphics.drawable.Drawable resource, Object model, com.bumptech.glide.request.target.Target<android.graphics.drawable.Drawable> target, com.bumptech.glide.load.DataSource dataSource, boolean isFirstResource) {
+                                            Log.d("ProfileFragment", "✅ Profile image loaded successfully!");
+                                            return false;
+                                        }
+                                    })
                                     .into(ivProfilePicture);
+                        } else {
+                            Log.w("ProfileFragment", "⚠️ No profile picture URL found");
                         }
                     }
                 })
@@ -125,10 +146,11 @@ public class ProfileFragment extends Fragment {
     }
 
     private void setupClickListeners() {
-        // Edit photo
+        // Edit photo - opens EditProfileActivity
         if (fabEditPhoto != null) {
             fabEditPhoto.setOnClickListener(v -> {
-                // TODO: Implement photo picker
+                Intent intent = new Intent(requireContext(), EditProfileActivity.class);
+                startActivity(intent);
             });
         }
 

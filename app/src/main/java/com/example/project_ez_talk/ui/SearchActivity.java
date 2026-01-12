@@ -167,21 +167,43 @@ public class SearchActivity extends BaseActivity {
     private void performSearch(String query) {
         String lowerQuery = query.toLowerCase();
         searchResults.clear();
+        
+        // Track how many search types are pending
+        final int[] pendingSearches = {0};
+        
+        // Count how many searches we need to perform
+        if ("all".equals(currentFilter)) {
+            pendingSearches[0] = 3; // users, groups, channels
+        } else if ("users".equals(currentFilter)) {
+            pendingSearches[0] = 1;
+        } else if ("groups".equals(currentFilter)) {
+            pendingSearches[0] = 1;
+        } else if ("channels".equals(currentFilter)) {
+            pendingSearches[0] = 1;
+        }
+        
+        // Create callback to update UI after all searches complete
+        Runnable onSearchComplete = () -> {
+            pendingSearches[0]--;
+            if (pendingSearches[0] == 0) {
+                updateResultsUI();
+            }
+        };
 
         // Search based on filter
         if ("all".equals(currentFilter) || "users".equals(currentFilter)) {
-            searchUsers(lowerQuery);
+            searchUsers(lowerQuery, onSearchComplete);
         }
         if ("all".equals(currentFilter) || "groups".equals(currentFilter)) {
-            searchGroups(lowerQuery);
+            searchGroups(lowerQuery, onSearchComplete);
         }
         if ("all".equals(currentFilter) || "channels".equals(currentFilter)) {
-            searchChannels(lowerQuery);
+            searchChannels(lowerQuery, onSearchComplete);
         }
     }
 
     // ==================== SEARCH USERS ====================
-    private void searchUsers(String query) {
+    private void searchUsers(String query, Runnable onComplete) {
         db.collection("users")
                 .get()
                 .addOnSuccessListener(querySnapshot -> {
@@ -214,16 +236,17 @@ public class SearchActivity extends BaseActivity {
                             searchResults.add(result);
                         }
                     }
-                    updateResultsUI();
                     Log.d(TAG, "✅ Found " + searchResults.size() + " users");
+                    onComplete.run();
                 })
                 .addOnFailureListener(e -> {
                     Log.e(TAG, "❌ User search failed: " + e.getMessage());
+                    onComplete.run();
                 });
     }
 
     // ==================== SEARCH GROUPS ====================
-    private void searchGroups(String query) {
+    private void searchGroups(String query, Runnable onComplete) {
         db.collection("groups")
                 .get()
                 .addOnSuccessListener(querySnapshot -> {
@@ -251,16 +274,17 @@ public class SearchActivity extends BaseActivity {
                             searchResults.add(result);
                         }
                     }
-                    updateResultsUI();
                     Log.d(TAG, "✅ Found " + searchResults.size() + " results (with groups)");
+                    onComplete.run();
                 })
                 .addOnFailureListener(e -> {
                     Log.e(TAG, "❌ Group search failed: " + e.getMessage());
+                    onComplete.run();
                 });
     }
 
     // ==================== SEARCH CHANNELS ====================
-    private void searchChannels(String query) {
+    private void searchChannels(String query, Runnable onComplete) {
         db.collection("channels")
                 .whereEqualTo("isPublic", true)
                 .get()
@@ -287,11 +311,12 @@ public class SearchActivity extends BaseActivity {
                             searchResults.add(result);
                         }
                     }
-                    updateResultsUI();
                     Log.d(TAG, "✅ Found " + searchResults.size() + " total results");
+                    onComplete.run();
                 })
                 .addOnFailureListener(e -> {
                     Log.e(TAG, "❌ Channel search failed: " + e.getMessage());
+                    onComplete.run();
                 });
     }
 

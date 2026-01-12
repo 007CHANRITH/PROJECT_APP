@@ -31,6 +31,9 @@ public class SettingsActivity extends BaseActivity {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_settings);
 
+        // Smooth fade animation when activity is created
+        overridePendingTransition(android.R.anim.fade_in, android.R.anim.fade_out);
+
         initViews();
         loadSettings();
         setupListeners();
@@ -115,11 +118,18 @@ public class SettingsActivity extends BaseActivity {
                 // Save and apply locale
                 LocaleHelper.setLocale(SettingsActivity.this, selectedCode);
 
-                // Recreate activity for smooth language change
-                recreate();
+                // Update the current language text immediately
+                tvCurrentLanguage.setText(LANGUAGES[selectedLanguageIndex]);
 
-                // Show toast
+                // Show toast before recreate
                 Toast.makeText(this, getString(R.string.language_changed), Toast.LENGTH_SHORT).show();
+
+                // Use post to ensure toast is shown before recreating
+                tvCurrentLanguage.postDelayed(() -> {
+                    // Smooth fade animation
+                    overridePendingTransition(android.R.anim.fade_in, android.R.anim.fade_out);
+                    recreate();
+                }, 100);
             }
         });
 
@@ -130,6 +140,13 @@ public class SettingsActivity extends BaseActivity {
     @Override
     public boolean onSupportNavigateUp() {
         finish();
+        overridePendingTransition(android.R.anim.fade_in, android.R.anim.fade_out);
         return true;
+    }
+
+    @Override
+    public void finish() {
+        super.finish();
+        overridePendingTransition(android.R.anim.fade_in, android.R.anim.fade_out);
     }
 }

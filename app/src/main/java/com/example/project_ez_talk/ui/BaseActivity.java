@@ -1,17 +1,27 @@
 package com.example.project_ez_talk.ui;
 
+import android.content.Context;
 import android.os.Bundle;
 import android.util.Log;
 
 import androidx.appcompat.app.AppCompatActivity;
 
+import com.example.project_ez_talk.helper.LocaleHelper;
+
 /**
  * ✅ Base Activity class
  * Provides common functionality for all activities
+ * Handles locale switching for multi-language support
  */
 public class BaseActivity extends AppCompatActivity {
 
     protected static final String TAG = "BaseActivity";
+
+    @Override
+    protected void attachBaseContext(Context newBase) {
+        // Apply saved locale to this activity
+        super.attachBaseContext(LocaleHelper.setLocale(newBase));
+    }
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {

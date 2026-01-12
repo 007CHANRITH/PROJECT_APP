@@ -1,0 +1,154 @@
+rules_version = '2';
+
+service cloud.firestore {
+  match /databases/{database}/documents {
+
+    // ==================== HELPER FUNCTIONS ====================
+    function isAuthenticated() {
+      return request.auth != null;
+    }
+
+    function isUser(uid) {
+      return request.auth.uid == uid;
+    }
+
+    function isGroupMember(groupId) {
+      let groupData = get(/databases/$(database)/documents/groups/$(groupId)).data;
+      return request.auth.uid in groupData.get('memberIds', []) ||
+             request.auth.uid in groupData.get('members', {}).keys();
+    }
+
+    // ==================== USERS COLLECTION ====================
+    match /users/{userId} {
+      allow read: if isAuthenticated();
+      allow write: if isUser(userId);
+
+      match /chats/{chatId} {
+        allow read, create, update, delete: if isUser(userId) || isAuthenticated();
+      }
+
+      match /groupSettings/{groupId} {
+        allow read, write: if isUser(userId);
+      }
+
+      match /channels/{channelId} {
+        allow read, create, update, delete: if isUser(userId);
+      }
+
+      match /friends/{friendId} {
+        allow read, create, update, delete: if isUser(userId);
+      }
+
+      // ✅ NOTIFICATIONS - Allow any authenticated user to write notifications
+      // This allows User A to send notifications to User B
+      match /notifications/{notificationId} {
+        allow read: if isUser(userId);  // Only the user can read their own notifications
+        allow write: if isAuthenticated();  // Any authenticated user can write notifications
+        allow delete: if isUser(userId);  // Only the user can delete their own notifications
+      }
+    }
+
+    // ==================== FRIENDSHIPS ====================
+    match /friendships/{friendshipId} {
+      allow read: if isAuthenticated();
+      allow create: if isAuthenticated();
+      allow update, delete: if isAuthenticated() &&
+        (request.auth.uid == resource.data.get('user1', '') ||
+         request.auth.uid == resource.data.get('user2', ''));
+    }
+
+    // ==================== FRIEND REQUESTS ====================
+    match /friendRequests/{requestId} {
+      allow read: if isAuthenticated();
+      allow create: if isAuthenticated() &&
+        request.auth.uid == request.resource.data.senderId;
+      allow update: if isAuthenticated() &&
+        (request.auth.uid == resource.data.get('senderId', '') ||
+         request.auth.uid == resource.data.get('receiverId', ''));
+      allow delete: if isAuthenticated() &&
+        request.auth.uid == resource.data.get('receiverId', '');
+    }
+
+    // ==================== GROUPS ====================
+    match /groups/{groupId} {
+      allow read: if isAuthenticated();
+      allow create: if isAuthenticated();
+      allow update: if isAuthenticated() &&
+        (request.auth.uid in resource.data.get('memberIds', []) ||
+         request.auth.uid in resource.data.get('members', {}).keys());
+      allow delete: if isAuthenticated() &&
+        request.auth.uid == resource.data.get('creatorId', '');
+
+      match /messages/{messageId} {
+        allow read: if isAuthenticated() && isGroupMember(groupId);
+        allow create: if isAuthenticated() &&
+          isGroupMember(groupId) &&
+          request.resource.data.senderId == request.auth.uid;
+        allow update, delete: if isAuthenticated() &&
+          resource.data.senderId == request.auth.uid;
+      }
+    }
+
+    // ==================== CHANNELS ====================
+    match /channels/{channelId} {
+      allow read: if isAuthenticated();
+      allow create: if isAuthenticated();
+      allow update, delete: if isAuthenticated() &&
+        (request.auth.uid == resource.data.get('ownerId', '') ||
+         request.auth.uid in resource.data.get('admins', {}).keys());
+
+      match /messages/{messageId} {
+        allow read: if isAuthenticated();
+        allow create: if isAuthenticated() &&
+          request.auth.uid in get(/databases/$(database)/documents/channels/$(channelId)).data.get('admins', {}).keys() &&
+          request.resource.data.senderId == request.auth.uid;
+        allow update, delete: if isAuthenticated() &&
+          request.auth.uid == resource.data.senderId;
+      }
+    }
+
+    // ==================== PRIVATE CHATS ====================
+    match /chats/{chatId} {
+      allow read: if isAuthenticated() &&
+        request.auth.uid in resource.data.get('participants', []);
+      allow create: if isAuthenticated();
+      allow update, delete: if isAuthenticated() &&
+        request.auth.uid in resource.data.get('participants', []);
+
+      match /messages/{messageId} {
+        allow read: if isAuthenticated() &&
+          request.auth.uid in
+          get(/databases/$(database)/documents/chats/$(chatId)).data.get('participants', []);
+        allow create: if isAuthenticated() &&
+          request.auth.uid in
+          get(/databases/$(database)/documents/chats/$(chatId)).data.get('participants', []) &&
+          request.resource.data.senderId == request.auth.uid;
+        allow update, delete: if isAuthenticated() &&
+          request.auth.uid == resource.data.senderId;
+      }
+    }
+
+    // ==================== CALLS COLLECTION ====================
+    match /calls/{callId} {
+      // Both caller and receiver can read
+      allow read: if isAuthenticated() &&
+        (request.auth.uid == resource.data.callerId ||
+         request.auth.uid == resource.data.receiverId);
+
+      // Only caller can create a call
+      allow create: if isAuthenticated() &&
+        request.auth.uid == request.resource.data.callerId;
+
+      // Both caller and receiver can update (status, sdp, iceCandidates)
+      allow update: if isAuthenticated() &&
+        (request.auth.uid == resource.data.callerId ||
+         request.auth.uid == resource.data.receiverId);
+
+      // Optional: both can delete
+      allow delete: if isAuthenticated() &&
+        (request.auth.uid == resource.data.callerId ||
+         request.auth.uid == resource.data.receiverId);
+    }
+
+  }
+}

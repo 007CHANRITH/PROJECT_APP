@@ -11,19 +11,27 @@ import java.net.HttpURLConnection;
 import java.net.URL;
 
 /**
- * Send notifications via Railway backend server
+ * Send notifications to other users via Cloud Functions
  * When User A sends message to User B, User B gets notification!
+ * 
+ * ⚠️ TEMPORARY: Currently using placeholder backend URL
+ * TODO: Deploy Firebase Cloud Function or Railway backend
  */
 public class MessageNotificationManager {
 
     private static final String TAG = "MessageNotificationManager";
 
-    // ⚠️ CHANGE THIS TO YOUR RAILWAY URL
-    // Example: "https://ez-talk-notifications-prod.up.railway.app"
+    // ⚠️ TEMPORARY SOLUTION: Store notification data in Firestore
+    // Other user's app will listen to this collection via MyFirebaseMessagingService
+    private static final boolean USE_FIRESTORE_TRIGGER = true;
+    
+    // For future backend implementation:
     private static final String BACKEND_URL = "https://your-project-name-production.up.railway.app";
 
     /**
      * Send notification when message is sent to a user
+     * 
+     * ✅ WORKING WITHOUT BACKEND - Uses Firestore trigger
      *
      * Call this in ChatDetailActivity.sendTextMessage() after message is saved
      *
@@ -32,16 +40,20 @@ public class MessageNotificationManager {
      *     receiverId,
      *     currentUserName,
      *     messageText,
+     *     "TEXT",  // messageType
      *     chatId,
-     *     currentUser.getUid()
+     *     currentUser.getUid(),
+     *     currentUserAvatar
      * );
      */
     public static void sendMessageNotification(
             String receiverId,
             String senderName,
             String messageText,
+            String messageType,
             String chatId,
-            String senderId) {
+            String senderId,
+            String senderAvatar) {
 
         // Don't notify self
         if (receiverId.equals(senderId)) {
@@ -51,6 +63,85 @@ public class MessageNotificationManager {
         Log.d(TAG, "📤 Sending notification");
         Log.d(TAG, "   To: " + receiverId);
         Log.d(TAG, "   From: " + senderName);
+        Log.d(TAG, "   Type: " + messageType);
+
+        if (USE_FIRESTORE_TRIGGER) {
+            // ✅ NEW METHOD: Write notification data to Firestore
+            // MyFirebaseMessagingService on receiver's device will listen and show notification
+            sendViaFirestoreTrigger(receiverId, senderName, messageText, messageType, chatId, senderId, senderAvatar);
+        } else {
+            // OLD METHOD: Call backend server (requires deployment)
+            sendViaBackendServer(receiverId, senderName, messageText, messageType, chatId, senderId, senderAvatar);
+        }
+    }
+    
+    /**
+     * Overload for backward compatibility
+     */
+    public static void sendMessageNotification(
+            String receiverId,
+            String senderName,
+            String messageText,
+            String chatId,
+            String senderId) {
+        sendMessageNotification(receiverId, senderName, messageText, "TEXT", chatId, senderId, null);
+    }
+
+    /**
+     * ✅ NEW: Send notification via Firestore trigger
+     * Writes notification data to Firestore, receiver's app listens and shows notification
+     */
+    private static void sendViaFirestoreTrigger(
+            String receiverId,
+            String senderName,
+            String messageText,
+            String messageType,
+            String chatId,
+            String senderId,
+            String senderAvatar) {
+
+        FirebaseFirestore db = FirebaseFirestore.getInstance();
+
+        // Truncate message if too long
+        String truncatedMessage = messageText != null && messageText.length() > 100
+                ? messageText.substring(0, 100) + "..."
+                : messageText;
+
+        // Create notification data as Map (easier than JSON)
+        java.util.Map<String, Object> notificationData = new java.util.HashMap<>();
+        notificationData.put("senderId", senderId != null ? senderId : "");
+        notificationData.put("senderName", senderName != null ? senderName : "Unknown");
+        notificationData.put("messageText", truncatedMessage != null ? truncatedMessage : "");
+        notificationData.put("messageType", messageType != null ? messageType : "TEXT");
+        notificationData.put("chatId", chatId != null ? chatId : "");
+        notificationData.put("senderAvatar", senderAvatar != null ? senderAvatar : "");
+        notificationData.put("timestamp", System.currentTimeMillis());
+        notificationData.put("type", "private_chat");
+
+        // Write to Firestore: users/{receiverId}/notifications/{autoId}
+        db.collection("users")
+                .document(receiverId)
+                .collection("notifications")
+                .add(notificationData)
+                .addOnSuccessListener(docRef -> {
+                    Log.d(TAG, "✅ Notification data written to Firestore!");
+                })
+                .addOnFailureListener(e -> {
+                    Log.e(TAG, "❌ Failed to write notification: " + e.getMessage());
+                });
+    }
+
+    /**
+     * Send notification via backend server (requires deployment)
+     */
+    private static void sendViaBackendServer(
+            String receiverId,
+            String senderName,
+            String messageText,
+            String messageType,
+            String chatId,
+            String senderId,
+            String senderAvatar) {
 
         // Get receiver's FCM token from Firestore
         FirebaseFirestore db = FirebaseFirestore.getInstance();
@@ -62,13 +153,15 @@ public class MessageNotificationManager {
                         String fcmToken = doc.getString("fcmToken");
 
                         if (fcmToken != null && !fcmToken.isEmpty()) {
-                             // Call backend to send notification
+                            // Call backend to send notification
                             callBackendNotification(
                                     fcmToken,
                                     senderName,
                                     messageText,
+                                    messageType,
                                     chatId,
-                                    senderId
+                                    senderId,
+                                    senderAvatar
                             );
                         } else {
                             Log.d(TAG, "⚠️ No FCM token for user: " + receiverId);
@@ -117,8 +210,10 @@ public class MessageNotificationManager {
             String token,
             String title,
             String body,
+            String messageType,
             String chatId,
-            String senderId) {
+            String senderId,
+            String senderAvatar) {
 
         // Run in background thread
         new Thread(() -> {
@@ -140,14 +235,16 @@ public class MessageNotificationManager {
                         ? body.substring(0, 100) + "..."
                         : body;
 
-                // Create JSON payload
+                // Create JSON payload with all required fields
                 JSONObject payload = new JSONObject();
                 payload.put("token", token);
                 payload.put("title", title);
                 payload.put("body", truncatedBody);
                 payload.put("type", "private_chat");
+                payload.put("messageType", messageType != null ? messageType : "TEXT");
                 payload.put("chatId", chatId != null ? chatId : "");
                 payload.put("senderId", senderId != null ? senderId : "");
+                payload.put("senderAvatar", senderAvatar != null ? senderAvatar : "");
 
                 Log.d(TAG, "📤 Sending payload...");
 

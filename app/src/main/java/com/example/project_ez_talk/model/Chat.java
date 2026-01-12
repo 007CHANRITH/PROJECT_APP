@@ -10,6 +10,7 @@ public class Chat {
     private String name;                  // Other user's name
     private String avatarUrl;
     private String lastMessage;
+    private String lastMessageType;       // TEXT, VOICE, IMAGE, LOCATION, FILE
     private long lastMessageTimestamp;
     private int unreadCount = 0;
     private List<String> participants;
@@ -21,6 +22,7 @@ public class Chat {
     public String getName() { return name; }
     public String getAvatarUrl() { return avatarUrl; }
     public String getLastMessage() { return lastMessage; }
+    public String getLastMessageType() { return lastMessageType; }
     public long getLastMessageTimestamp() { return lastMessageTimestamp; }
     public int getUnreadCount() { return unreadCount; }
     public List<String> getParticipants() { return participants; }
@@ -30,6 +32,7 @@ public class Chat {
     public void setName(String name) { this.name = name; }
     public void setAvatarUrl(String avatarUrl) { this.avatarUrl = avatarUrl; }
     public void setLastMessage(String lastMessage) { this.lastMessage = lastMessage; }
+    public void setLastMessageType(String lastMessageType) { this.lastMessageType = lastMessageType; }
     public void setLastMessageTimestamp(long lastMessageTimestamp) { this.lastMessageTimestamp = lastMessageTimestamp; }
     public void setUnreadCount(int unreadCount) { this.unreadCount = unreadCount; }
     public void setParticipants(List<String> participants) { this.participants = participants; }

@@ -1,0 +1,19 @@
+// Firebase Storage Security Rules
+// Copy these rules to Firebase Console > Storage > Rules
+
+rules_version = '2';
+service firebase.storage {
+  match /b/{bucket}/o {
+    // Profile images - allow authenticated users to upload their own
+    match /profile_images/{userId}_{timestamp}.jpg {
+      allow read: if true; // Anyone can read profile pictures
+      allow write: if request.auth != null && request.auth.uid == userId; // Only owner can upload
+    }
+    
+    // Allow all authenticated users to read/write (temporary - for testing)
+    match /{allPaths=**} {
+      allow read: if true;
+      allow write: if request.auth != null;
+    }
+  }
+}

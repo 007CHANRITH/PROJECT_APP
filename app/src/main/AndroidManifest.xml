@@ -336,6 +336,12 @@
             android:exported="false"
             tools:ignore="Instantiatable" />
 
+        <!-- ✅ Notification Listener Service - Listens to Firestore for notifications -->
+        <service
+            android:name=".service.NotificationListenerService"
+            android:enabled="true"
+            android:exported="false" />
+
         <!-- ========== FIREBASE METADATA ========== -->
 
         <!-- Firebase Messaging Default Values -->

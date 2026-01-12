@@ -6,6 +6,7 @@ import android.os.Bundle;
 import android.view.MotionEvent;
 import android.view.View;
 import android.widget.ImageView;
+import android.widget.TextView;
 import android.widget.Toast;
 import com.example.project_ez_talk.ui.SearchActivity;
 import androidx.navigation.NavController;
@@ -13,6 +14,7 @@ import androidx.navigation.fragment.NavHostFragment;
 import androidx.navigation.ui.NavigationUI;
 
 import com.example.project_ez_talk.R;
+import com.example.project_ez_talk.service.NotificationListenerService;
 import com.example.project_ez_talk.ui.BaseActivity;
 import com.example.project_ez_talk.ui.auth.welcome.WelcomeActivity;
 import com.example.project_ez_talk.ui.profile.AddFriendDialog;
@@ -21,6 +23,8 @@ import com.google.android.material.appbar.MaterialToolbar;
 import com.google.android.material.bottomnavigation.BottomNavigationView;
 import com.google.android.material.floatingactionbutton.FloatingActionButton;
 import com.google.firebase.auth.FirebaseAuth;
+import com.google.firebase.firestore.FirebaseFirestore;
+import com.google.firebase.firestore.ListenerRegistration;
 
 /**
  * HomeActivity - Main container for the app after login
@@ -34,6 +38,9 @@ public class HomeActivity extends BaseActivity {
     private FloatingActionButton fabCenter;
     private MaterialToolbar toolbar;
     private ImageView ivSearch, ivNotification;
+    private TextView tvNotificationBadge;
+    
+    private ListenerRegistration unreadCountListener;
 
     // Variables for draggable FAB
     private float dX = 0f;
@@ -59,6 +66,10 @@ public class HomeActivity extends BaseActivity {
         setupNavigation();
         setupToolbar();
         setupDraggableFab();
+        setupUnreadCounter();
+        
+        // ✅ Start notification listener service
+        startNotificationListener();
     }
 
     private void initViews() {
@@ -67,6 +78,7 @@ public class HomeActivity extends BaseActivity {
         fabCenter = findViewById(R.id.fabCenter);
         ivSearch = findViewById(R.id.ivSearch);
         ivNotification = findViewById(R.id.ivNotification);
+        tvNotificationBadge = findViewById(R.id.tvNotificationBadge);
     }
 
     private void setupNavigation() {
@@ -184,6 +196,68 @@ public class HomeActivity extends BaseActivity {
             dialog.show(getSupportFragmentManager(), "AddFriendDialog");
         } catch (Exception e) {
             Toast.makeText(this, "Error opening dialog: " + e.getMessage(), Toast.LENGTH_SHORT).show();
+        }
+    }
+
+    /**
+     * ✅ Start background service to listen for notifications
+     */
+    private void startNotificationListener() {
+        Intent serviceIntent = new Intent(this, NotificationListenerService.class);
+        startService(serviceIntent);
+        android.util.Log.d("HomeActivity", "✅ NotificationListenerService started");
+    }
+    
+    /**
+     * Setup real-time unread message counter
+     */
+    private void setupUnreadCounter() {
+        String currentUserId = FirebaseAuth.getInstance().getCurrentUser() != null 
+                ? FirebaseAuth.getInstance().getCurrentUser().getUid() : null;
+        
+        if (currentUserId == null) return;
+        
+        unreadCountListener = FirebaseFirestore.getInstance()
+                .collection("users")
+                .document(currentUserId)
+                .collection("chats")
+                .addSnapshotListener((snapshots, error) -> {
+                    if (error != null || snapshots == null) {
+                        updateBadge(0);
+                        return;
+                    }
+                    
+                    int totalUnread = 0;
+                    for (var doc : snapshots.getDocuments()) {
+                        Long unreadCount = doc.getLong("unreadCount");
+                        if (unreadCount != null) {
+                            totalUnread += unreadCount;
+                        }
+                    }
+                    
+                    updateBadge(totalUnread);
+                });
+    }
+    
+    /**
+     * Update notification badge display
+     */
+    private void updateBadge(int count) {
+        if (tvNotificationBadge != null) {
+            if (count > 0) {
+                tvNotificationBadge.setVisibility(View.VISIBLE);
+                tvNotificationBadge.setText(count > 99 ? "99+" : String.valueOf(count));
+            } else {
+                tvNotificationBadge.setVisibility(View.GONE);
+            }
+        }
+    }
+    
+    @Override
+    protected void onDestroy() {
+        super.onDestroy();
+        if (unreadCountListener != null) {
+            unreadCountListener.remove();
         }
     }
 
