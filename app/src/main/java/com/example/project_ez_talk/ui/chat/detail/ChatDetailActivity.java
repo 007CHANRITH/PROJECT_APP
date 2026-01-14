@@ -636,7 +636,7 @@ public class ChatDetailActivity extends BaseActivity {
             return false;
         });
         btnAttach.setOnClickListener(v -> showAttachmentBottomSheet());
-        btnEmoji.setOnClickListener(v -> Toast.makeText(this, "Emoji picker coming soon", Toast.LENGTH_SHORT).show());
+        btnEmoji.setOnClickListener(v -> showEmojiPicker());
 
         btnVoiceCall.setOnClickListener(v -> initiateVoiceCall());
         btnVideoCall.setOnClickListener(v -> initiateVideoCall());
@@ -1068,6 +1068,22 @@ public class ChatDetailActivity extends BaseActivity {
         if (llContact != null) llContact.setOnClickListener(v -> { openContactPicker(); dialog.dismiss(); });
 
         dialog.show();
+    }
+
+    /**
+     * Show emoji picker bottom sheet
+     */
+    private void showEmojiPicker() {
+        com.example.project_ez_talk.ui.dialog.EmojiPickerBottomSheet emojiPicker =
+                com.example.project_ez_talk.ui.dialog.EmojiPickerBottomSheet.newInstance(emoji -> {
+                    // Insert emoji at cursor position
+                    int cursorPosition = etMessage.getSelectionStart();
+                    String currentText = etMessage.getText().toString();
+                    String newText = currentText.substring(0, cursorPosition) + emoji + currentText.substring(cursorPosition);
+                    etMessage.setText(newText);
+                    etMessage.setSelection(cursorPosition + emoji.length());
+                });
+        emojiPicker.show(getSupportFragmentManager(), "EmojiPicker");
     }
 
     // ============================================================

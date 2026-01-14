@@ -5,13 +5,16 @@ import android.os.Bundle;
 import android.util.Log;
 
 import androidx.appcompat.app.AppCompatActivity;
+import androidx.appcompat.app.AppCompatDelegate;
 
 import com.example.project_ez_talk.helper.LocaleHelper;
+import com.example.project_ez_talk.utils.Preferences;
 
 /**
  * ✅ Base Activity class
  * Provides common functionality for all activities
  * Handles locale switching for multi-language support
+ * Handles dark/light theme switching
  */
 public class BaseActivity extends AppCompatActivity {
 
@@ -25,8 +28,23 @@ public class BaseActivity extends AppCompatActivity {
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
+        // Apply theme BEFORE calling super.onCreate()
+        applyTheme();
         super.onCreate(savedInstanceState);
         Log.d(TAG, "onCreate: " + this.getClass().getSimpleName());
+    }
+
+    /**
+     * Apply saved theme preference (dark/light mode)
+     */
+    private void applyTheme() {
+        boolean isDarkMode = Preferences.isDarkMode(this);
+        if (isDarkMode) {
+            AppCompatDelegate.setDefaultNightMode(AppCompatDelegate.MODE_NIGHT_YES);
+        } else {
+            AppCompatDelegate.setDefaultNightMode(AppCompatDelegate.MODE_NIGHT_NO);
+        }
+        Log.d(TAG, "🎨 Theme applied: " + (isDarkMode ? "DARK" : "LIGHT"));
     }
 
     @Override

@@ -38,6 +38,7 @@ import com.example.project_ez_talk.ui.BaseActivity;
 import com.google.android.material.dialog.MaterialAlertDialogBuilder;
 import com.google.android.material.imageview.ShapeableImageView;
 import com.google.android.material.switchmaterial.SwitchMaterial;
+import com.google.firebase.firestore.Query;
 import com.google.firebase.auth.FirebaseAuth;
 import com.google.firebase.firestore.FirebaseFirestore;
 
@@ -298,16 +299,16 @@ public class GroupDetailsActivity extends BaseActivity {
             }
 
             if (btnVoiceCall != null) {
-                btnVoiceCall.setOnClickListener(v -> Toast.makeText(this, "Voice call feature coming soon", Toast.LENGTH_SHORT).show());
+                btnVoiceCall.setOnClickListener(v -> initiateGroupVoiceCall());
             }
             if (btnVideoCall != null) {
-                btnVideoCall.setOnClickListener(v -> Toast.makeText(this, "Video call feature coming soon", Toast.LENGTH_SHORT).show());
+                btnVideoCall.setOnClickListener(v -> initiateGroupVideoCall());
             }
             if (btnSearch != null) {
-                btnSearch.setOnClickListener(v -> Toast.makeText(this, "Search feature coming soon", Toast.LENGTH_SHORT).show());
+                btnSearch.setOnClickListener(v -> openSearchMessages());
             }
             if (btnMedia != null) {
-                btnMedia.setOnClickListener(v -> Toast.makeText(this, "Media gallery coming soon", Toast.LENGTH_SHORT).show());
+                btnMedia.setOnClickListener(v -> openMediaGallery());
             }
 
             if (switchMute != null) {
@@ -748,6 +749,144 @@ public class GroupDetailsActivity extends BaseActivity {
                 .addOnFailureListener(e -> {
                     Toast.makeText(this, "Failed to exit group", Toast.LENGTH_SHORT).show();
                 });
+    }
+
+    /**
+     * Initiate group voice call (placeholder)
+     */
+    private void initiateGroupVoiceCall() {
+        Toast.makeText(this, "Starting voice call with " + memberList.size() + " members...", Toast.LENGTH_SHORT).show();
+        new MaterialAlertDialogBuilder(this)
+                .setTitle("Group Voice Call")
+                .setMessage("Group voice calls support up to " + memberList.size() + " participants. This feature will be available in the next update!")
+                .setPositiveButton("OK", null)
+                .show();
+    }
+
+    /**
+     * Initiate group video call (placeholder)
+     */
+    private void initiateGroupVideoCall() {
+        Toast.makeText(this, "Starting video call with " + memberList.size() + " members...", Toast.LENGTH_SHORT).show();
+        new MaterialAlertDialogBuilder(this)
+                .setTitle("Group Video Call")
+                .setMessage("Group video calls support up to " + memberList.size() + " participants. This feature will be available in the next update!")
+                .setPositiveButton("OK", null)
+                .show();
+    }
+
+    /**
+     * Open search messages dialog
+     */
+    private void openSearchMessages() {
+        android.widget.EditText searchInput = new android.widget.EditText(this);
+        searchInput.setHint("Search messages...");
+        searchInput.setPadding(50, 30, 50, 30);
+
+        new MaterialAlertDialogBuilder(this)
+                .setTitle("Search Messages")
+                .setView(searchInput)
+                .setPositiveButton("Search", (dialog, which) -> {
+                    String query = searchInput.getText().toString().trim();
+                    if (!query.isEmpty()) {
+                        searchMessagesInGroup(query);
+                    }
+                })
+                .setNegativeButton("Cancel", null)
+                .show();
+    }
+
+    /**
+     * Search messages in group
+     */
+    private void searchMessagesInGroup(String query) {
+        db.collection("groups")
+                .document(groupId)
+                .collection("messages")
+                .orderBy("timestamp", Query.Direction.DESCENDING)
+                .limit(100)
+                .get()
+                .addOnSuccessListener(queryDocumentSnapshots -> {
+                    List<String> results = new ArrayList<>();
+                    for (com.google.firebase.firestore.DocumentSnapshot doc : queryDocumentSnapshots.getDocuments()) {
+                        String messageText = doc.getString("messageText");
+                        String senderName = doc.getString("senderName");
+                        if (messageText != null && messageText.toLowerCase().contains(query.toLowerCase())) {
+                            results.add(senderName + ": " + messageText);
+                        }
+                    }
+
+                    if (results.isEmpty()) {
+                        Toast.makeText(this, "No messages found", Toast.LENGTH_SHORT).show();
+                    } else {
+                        showSearchResults(results);
+                    }
+                })
+                .addOnFailureListener(e -> {
+                    Toast.makeText(this, "Search failed", Toast.LENGTH_SHORT).show();
+                    Log.e(TAG, "Search error: " + e.getMessage());
+                });
+    }
+
+    /**
+     * Show search results
+     */
+    private void showSearchResults(List<String> results) {
+        String[] resultsArray = results.toArray(new String[0]);
+        new MaterialAlertDialogBuilder(this)
+                .setTitle("Search Results (" + results.size() + ")")
+                .setItems(resultsArray, null)
+                .setPositiveButton("Close", null)
+                .show();
+    }
+
+    /**
+     * Open media gallery for group
+     */
+    private void openMediaGallery() {
+        db.collection("groups")
+                .document(groupId)
+                .collection("messages")
+                .orderBy("timestamp", Query.Direction.DESCENDING)
+                .limit(50)
+                .get()
+                .addOnSuccessListener(queryDocumentSnapshots -> {
+                    List<String> mediaUrls = new ArrayList<>();
+                    for (com.google.firebase.firestore.DocumentSnapshot doc : queryDocumentSnapshots.getDocuments()) {
+                        String messageType = doc.getString("messageType");
+                        if ("image".equals(messageType) || "video".equals(messageType)) {
+                            String mediaUrl = doc.getString("mediaUrl");
+                            if (mediaUrl != null && !mediaUrl.isEmpty()) {
+                                mediaUrls.add(mediaUrl);
+                            }
+                        }
+                    }
+
+                    if (mediaUrls.isEmpty()) {
+                        Toast.makeText(this, "No media found in this group", Toast.LENGTH_SHORT).show();
+                    } else {
+                        showMediaGallery(mediaUrls);
+                    }
+                })
+                .addOnFailureListener(e -> {
+                    Toast.makeText(this, "Failed to load media", Toast.LENGTH_SHORT).show();
+                    Log.e(TAG, "Media load error: " + e.getMessage());
+                });
+    }
+
+    /**
+     * Show media gallery
+     */
+    private void showMediaGallery(List<String> mediaUrls) {
+        new MaterialAlertDialogBuilder(this)
+                .setTitle("Media Gallery")
+                .setMessage("Found " + mediaUrls.size() + " photos and videos in this group")
+                .setPositiveButton("View", (dialog, which) -> {
+                    // TODO: Open media viewer activity
+                    Toast.makeText(this, "Media viewer opening...", Toast.LENGTH_SHORT).show();
+                })
+                .setNegativeButton("Close", null)
+                .show();
     }
 
     @Override

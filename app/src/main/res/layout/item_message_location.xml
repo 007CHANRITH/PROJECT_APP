@@ -93,7 +93,7 @@
                     android:fontFamily="@font/inter_regular"
                     android:maxLines="2"
                     android:text="Tap to view location"
-                    android:textColor="#FAFAFA"
+                    android:textColor="@color/white"
                     android:textSize="12sp"
                     tools:ignore="HardcodedText,TextContrastCheck" />
 

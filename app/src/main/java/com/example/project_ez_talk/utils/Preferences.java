@@ -16,6 +16,7 @@ public class Preferences {
     private static final String KEY_USER_PHONE = "user_phone";
     private static final String KEY_USER_PASSWORD = "user_password";
     private static final String KEY_TEMP_PASSWORD = "temp_password"; // For email verification flow
+    private static final String KEY_DARK_MODE = "dark_mode"; // Theme preference
 
     private static SharedPreferences getPrefs(Context context) {
         return context.getSharedPreferences(PREF_NAME, Context.MODE_PRIVATE);
@@ -115,5 +116,14 @@ public class Preferences {
     // Logout
     public static void logout(Context context) {
         clearAll(context);
+    }
+
+    // Dark Mode
+    public static boolean isDarkMode(Context context) {
+        return getPrefs(context).getBoolean(KEY_DARK_MODE, true); // Default to dark mode
+    }
+
+    public static void setDarkMode(Context context, boolean isDarkMode) {
+        getPrefs(context).edit().putBoolean(KEY_DARK_MODE, isDarkMode).apply();
     }
 }

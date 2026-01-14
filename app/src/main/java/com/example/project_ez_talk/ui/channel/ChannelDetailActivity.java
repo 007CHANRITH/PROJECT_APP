@@ -1,5 +1,6 @@
 package com.example.project_ez_talk.ui.channel;
 
+import android.annotation.SuppressLint;
 import android.os.Bundle;
 import android.text.TextUtils;
 import android.util.Log;
@@ -43,7 +44,7 @@ public class ChannelDetailActivity extends BaseActivity {
     private TextView tvChannelName, tvSubscriberCount;
     private RecyclerView rvMessages;
     private EditText etMessage;
-    private ImageView btnSend, btnEmoji;
+    private ImageView btnSend, btnEmoji, btnSubscribe;
 
     // Adapters and Data
     private MessageAdapter messageAdapter;
@@ -58,6 +59,7 @@ public class ChannelDetailActivity extends BaseActivity {
     private String currentUserName;
     private String currentUserAvatar;
     private boolean isAdmin = false;
+    private boolean isSubscribed = false;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -98,6 +100,9 @@ public class ChannelDetailActivity extends BaseActivity {
         btnSend = findViewById(R.id.btn_send);
         btnEmoji = findViewById(R.id.btn_emoji);
 
+        // Add subscribe button to toolbar
+        addSubscribeButton();
+
         // Setup RecyclerView
         LinearLayoutManager layoutManager = new LinearLayoutManager(this);
         layoutManager.setStackFromEnd(true);
@@ -128,9 +133,93 @@ public class ChannelDetailActivity extends BaseActivity {
 
         btnSend.setOnClickListener(v -> sendMessage());
 
-        btnEmoji.setOnClickListener(v ->
-                Toast.makeText(this, "Emoji picker coming soon", Toast.LENGTH_SHORT).show()
+        btnEmoji.setOnClickListener(v -> showEmojiPicker());
+    }
+
+    /**
+     * Add subscribe/unsubscribe button to toolbar
+     */
+    private void addSubscribeButton() {
+        btnSubscribe = new ImageView(this);
+        btnSubscribe.setImageResource(R.drawable.ic_add);
+        btnSubscribe.setColorFilter(androidx.core.content.ContextCompat.getColor(this, R.color.text_primary));
+        
+        androidx.appcompat.widget.Toolbar.LayoutParams params = new androidx.appcompat.widget.Toolbar.LayoutParams(
+                androidx.appcompat.widget.Toolbar.LayoutParams.WRAP_CONTENT,
+                androidx.appcompat.widget.Toolbar.LayoutParams.WRAP_CONTENT
         );
+        params.gravity = android.view.Gravity.END | android.view.Gravity.CENTER_VERTICAL;
+        params.setMarginEnd(16);
+        btnSubscribe.setLayoutParams(params);
+    btnSubscribe.setPadding(16, 16, 16, 16);
+        
+        btnSubscribe.setOnClickListener(v -> toggleSubscription());
+        
+        toolbar.addView(btnSubscribe);
+    }
+
+    /**
+     * Toggle subscription to channel
+     */
+    private void toggleSubscription() {
+        if (isSubscribed) {
+            // Unsubscribe
+            db.collection("channels")
+                    .document(channelId)
+                    .update("subscribers." + currentUserId, com.google.firebase.firestore.FieldValue.delete())
+                    .addOnSuccessListener(aVoid -> {
+                        Toast.makeText(this, "Unsubscribed from channel", Toast.LENGTH_SHORT).show();
+                        isSubscribed = false;
+                        updateSubscribeButton();
+                    })
+                    .addOnFailureListener(e -> {
+                        Toast.makeText(this, "Failed to unsubscribe", Toast.LENGTH_SHORT).show();
+                        Log.e(TAG, "Failed to unsubscribe: " + e.getMessage());
+                    });
+        } else {
+            // Subscribe
+            Map<String, Object> update = new HashMap<>();
+            update.put("subscribers." + currentUserId, true);
+            
+            db.collection("channels")
+                    .document(channelId)
+                    .update(update)
+                    .addOnSuccessListener(aVoid -> {
+                        Toast.makeText(this, "Subscribed to channel", Toast.LENGTH_SHORT).show();
+                        isSubscribed = true;
+                        updateSubscribeButton();
+                    })
+                    .addOnFailureListener(e -> {
+                        Toast.makeText(this, "Failed to subscribe", Toast.LENGTH_SHORT).show();
+                        Log.e(TAG, "Failed to subscribe: " + e.getMessage());
+                    });
+        }
+    }
+
+    /**
+     * Update subscribe button appearance
+     */
+    private void updateSubscribeButton() {
+        if (isSubscribed) {
+            btnSubscribe.setImageResource(R.drawable.ic_check);
+            btnSubscribe.setColorFilter(androidx.core.content.ContextCompat.getColor(this, R.color.secondary_green));
+        } else {
+            btnSubscribe.setImageResource(R.drawable.ic_add);
+            btnSubscribe.setColorFilter(androidx.core.content.ContextCompat.getColor(this, R.color.text_primary));
+        }
+    }
+
+    private void showEmojiPicker() {
+        com.example.project_ez_talk.ui.dialog.EmojiPickerBottomSheet emojiPicker =
+                com.example.project_ez_talk.ui.dialog.EmojiPickerBottomSheet.newInstance(emoji -> {
+                    // Insert emoji at cursor position
+                    int cursorPosition = etMessage.getSelectionStart();
+                    String currentText = etMessage.getText().toString();
+                    String newText = currentText.substring(0, cursorPosition) + emoji + currentText.substring(cursorPosition);
+                    etMessage.setText(newText);
+                    etMessage.setSelection(cursorPosition + emoji.length());
+                });
+        emojiPicker.show(getSupportFragmentManager(), "EmojiPicker");
     }
 
     private void fetchCurrentUserInfo() {
@@ -188,6 +277,10 @@ public class ChannelDetailActivity extends BaseActivity {
                         if (subscribers != null) {
                             int subscriberCount = subscribers.size();
                             tvSubscriberCount.setText(subscriberCount + (subscriberCount == 1 ? " subscriber" : " subscribers"));
+                            
+                            // Check if current user is subscribed
+                            isSubscribed = subscribers.containsKey(currentUserId) && Boolean.TRUE.equals(subscribers.get(currentUserId));
+                            updateSubscribeButton();
                         }
 
                         // ✅ Check if user is admin

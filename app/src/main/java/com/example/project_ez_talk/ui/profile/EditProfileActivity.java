@@ -100,7 +100,18 @@ public class EditProfileActivity extends BaseActivity {
     private void setupListeners() {
         toolbar.setNavigationOnClickListener(v -> onBackPressed());
 
+        // Click FAB to change photo
         fabChangePhoto.setOnClickListener(v -> {
+            imagePickerLauncher.launch("image/*");
+        });
+
+        // Click profile picture to change photo
+        cvProfilePicture.setOnClickListener(v -> {
+            imagePickerLauncher.launch("image/*");
+        });
+
+        // Click image to change photo
+        ivProfilePicture.setOnClickListener(v -> {
             imagePickerLauncher.launch("image/*");
         });
 
@@ -267,6 +278,7 @@ public class EditProfileActivity extends BaseActivity {
         // Prepare data for Firestore
         Map<String, Object> userData = new HashMap<>();
         userData.put("name", fullName);
+        userData.put("username", username);  // ✅ ADDED: Save username field
         userData.put("email", email);
         userData.put("phone", phone);
         userData.put("status", status);
@@ -276,6 +288,7 @@ public class EditProfileActivity extends BaseActivity {
         userData.put("updatedAt", System.currentTimeMillis());
 
         Log.d(TAG, "💾 Saving profile to Firestore...");
+        Log.d(TAG, "📝 Username: " + username);  // ✅ ADDED: Debug log
 
         // Save to Firestore
         db.collection("users")

@@ -304,7 +304,20 @@ public class GroupChatActivity extends BaseActivity {
         btnAttach.setOnClickListener(v -> showAttachmentBottomSheet());
 
         // Emoji picker
-        btnEmoji.setOnClickListener(v -> Toast.makeText(this, "Emoji picker coming soon", Toast.LENGTH_SHORT).show());
+        btnEmoji.setOnClickListener(v -> showEmojiPicker());
+    }
+
+    private void showEmojiPicker() {
+        com.example.project_ez_talk.ui.dialog.EmojiPickerBottomSheet emojiPicker =
+                com.example.project_ez_talk.ui.dialog.EmojiPickerBottomSheet.newInstance(emoji -> {
+                    // Insert emoji at cursor position
+                    int cursorPosition = etMessage.getSelectionStart();
+                    String currentText = etMessage.getText().toString();
+                    String newText = currentText.substring(0, cursorPosition) + emoji + currentText.substring(cursorPosition);
+                    etMessage.setText(newText);
+                    etMessage.setSelection(cursorPosition + emoji.length());
+                });
+        emojiPicker.show(getSupportFragmentManager(), "EmojiPicker");
     }
 
     private void openGroupDetails() {

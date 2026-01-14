@@ -14,6 +14,7 @@ import androidx.appcompat.widget.Toolbar;
 import com.example.project_ez_talk.R;
 import com.example.project_ez_talk.ui.BaseActivity;
 import com.example.project_ez_talk.helper.LocaleHelper;
+import com.example.project_ez_talk.utils.Preferences;
 
 public class SettingsActivity extends BaseActivity {
 
@@ -64,16 +65,30 @@ public class SettingsActivity extends BaseActivity {
             }
         }
         tvCurrentLanguage.setText(LANGUAGES[selectedLanguageIndex]);
+        
+        // Load dark mode preference
+        boolean isDarkMode = Preferences.isDarkMode(this);
+        switchDarkMode.setChecked(isDarkMode);
     }
 
     private void setupListeners() {
         // Dark mode toggle
         switchDarkMode.setOnCheckedChangeListener((buttonView, isChecked) -> {
             if (buttonView.isPressed()) {
+                // Save preference
+                Preferences.setDarkMode(this, isChecked);
+                
+                // Show message
                 String message = isChecked ?
                         getString(R.string.dark_mode_enabled) :
                         getString(R.string.light_mode_enabled);
                 Toast.makeText(this, message, Toast.LENGTH_SHORT).show();
+                
+                // Recreate activity to apply theme with smooth animation
+                buttonView.postDelayed(() -> {
+                    overridePendingTransition(android.R.anim.fade_in, android.R.anim.fade_out);
+                    recreate();
+                }, 100);
             }
         });
 

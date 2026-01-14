@@ -3,6 +3,7 @@ package com.example.project_ez_talk;
 import android.app.Application;
 
 import com.example.project_ez_talk.helper.SupabaseStorageManager;
+import com.example.project_ez_talk.helper.ThemeHelper;
 import com.google.firebase.FirebaseApp;
 import com.google.firebase.database.FirebaseDatabase;
 
@@ -14,6 +15,9 @@ public class MainApplication extends Application {
     @Override
     public void onCreate() {
         super.onCreate();
+
+        // ✅ Apply saved theme on app start
+        ThemeHelper.applyTheme(this);
 
         // ✅ Initialize Firebase ONCE
         FirebaseApp.initializeApp(this);

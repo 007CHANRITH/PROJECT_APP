@@ -195,6 +195,7 @@
     <string name="recording">Recording</string>
     <string name="slide_to_cancel">Slide to cancel</string>
     <string name="emoji">Emoji</string>
+    <string name="emoji_sticker">Emoji &amp; Stickers</string>
     <string name="attachment">Attachment</string>
     <string name="add_photo">Add photo</string>
 

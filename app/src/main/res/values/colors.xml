@@ -1,5 +1,7 @@
 <?xml version="1.0" encoding="utf-8"?>
     <resources xmlns:tools="http://schemas.android.com/tools">
+        <!-- LIGHT MODE COLORS -->
+        
         <!-- Primary Colors -->
         <color name="primary_purple">#6C5CE7</color>
         <color name="primary_purple_dark">#5B4CD6</color>
@@ -10,27 +12,27 @@
         <color name="secondary_green_dark">#00C792</color>
         <color name="secondary_green_light">#1FDFB0</color>
 
-        <!-- Background Colors -->
-        <color name="background_dark">#1E2139</color>
-        <color name="background_darker">#181A2E</color>
-        <color name="background_card">#2A2D4A</color>
-        <color name="background_gradient_start">#2D3155</color>
-        <color name="background_gradient_end">#1E2139</color>
+        <!-- Background Colors (LIGHT) -->
+        <color name="background_dark">#F5F5F7</color>
+        <color name="background_darker">#FFFFFF</color>
+        <color name="background_card">#FFFFFF</color>
+        <color name="background_gradient_start">#F5F5F7</color>
+        <color name="background_gradient_end">#FFFFFF</color>
 
-        <!-- Message Bubble Colors -->
+        <!-- Message Bubble Colors (LIGHT) -->
         <color name="message_sent">#6C5CE7</color>
-        <color name="message_received">#3A3D5C</color>
-        <color name="message_system">#4A4D6C</color>
+        <color name="message_received">#E8E8EC</color>
+        <color name="message_system">#D1D1D6</color>
 
-        <!-- Text Colors -->
-        <color name="text_primary">#FFFFFF</color>
-        <color name="text_secondary">#A0A4C1</color>
-        <color name="text_tertiary">#6B6E8C</color>
-        <color name="text_hint">#555872</color>
+        <!-- Text Colors (LIGHT) -->
+        <color name="text_primary">#1C1C1E</color>
+        <color name="text_secondary">#6E6E73</color>
+        <color name="text_tertiary">#AEAEB2</color>
+        <color name="text_hint">#C7C7CC</color>
 
         <!-- Status Colors -->
         <color name="status_online">#00D9A3</color>
-        <color name="status_offline">#6B6E8C</color>
+        <color name="status_offline">#AEAEB2</color>
         <color name="status_away">#F59E0B</color>
         <color name="status_busy">#EF4444</color>
 
@@ -40,46 +42,48 @@
         <color name="accent_orange">#FF9F43</color>
         <color name="accent_red">#EE5A6F</color>
 
-        <!-- UI Elements -->
-        <color name="divider">#2E3250</color>
-        <color name="ripple">#3A3D5C</color>
+        <!-- UI Elements (LIGHT) -->
+        <color name="divider">#E5E5EA</color>
+        <color name="ripple">#E8E8EC</color>
         <color name="overlay">#80000000</color>
         <color name="transparent">#00000000</color>
 
         <!-- Button Colors -->
         <color name="button_enabled">#6C5CE7</color>
-        <color name="button_disabled">#3A3D5C</color>
+        <color name="button_disabled">#E8E8EC</color>
         <color name="button_text">#FFFFFF</color>
 
-        <!-- Navigation Bar -->
-        <color name="nav_bar_background">#1E2139</color>
+        <!-- Navigation Bar (LIGHT) -->
+        <color name="nav_bar_background">#FFFFFF</color>
         <color name="nav_bar_icon_selected">#6C5CE7</color>
-        <color name="nav_bar_icon_unselected">#6B6E8C</color>
+        <color name="nav_bar_icon_unselected">#AEAEB2</color>
 
         <!-- Call Screen -->
         <color name="call_background">#00D9A3</color>
         <color name="call_button_end">#EE5A6F</color>
-
+        <color name="call_button_action">#00D9A3</color>
+        <color name="call_button_accept">#03A9F4</color>
 
         <!-- Badge Colors -->
         <color name="badge_notification">#EE5A6F</color>
         <color name="badge_text">#FFFFFF</color>
 
-        <!-- Shimmer Effect -->
-        <color name="shimmer_base">#2A2D4A</color>
-        <color name="shimmer_highlight">#3A3D5C</color>
+        <!-- Shimmer Effect (LIGHT) -->
+        <color name="shimmer_base">#E8E8EC</color>
+        <color name="shimmer_highlight">#F5F5F7</color>
 
     <color name="colorPrimary">#6200EE</color>
     <color name="colorAccent">#03DAC5</color>
     <color name="white">#FFFFFF</color>
-
-
-
-        <!-- Call Button Action Colors -->
-        <color name="call_button_action">#00D9A3</color>
-        <color name="call_button_accept">#03A9F4</color>
+        
+        <!-- Call Control Colors (LIGHT) -->
+        <color name="call_control_button">#E8E8EC</color>
+        <color name="call_control_end">#EE5A6F</color>
+        <color name="call_overlay_dark">#99000000</color>
+        <color name="call_card_background">#FFFFFF</color>
+        
         <color name="call_button_decline">#EE5A6F</color>
-        <color name="call_button_mute">#3A3D5C</color>
+        <color name="call_button_mute">#E8E8EC</color>
         <color name="call_button_speaker">#6C5CE7</color>
         <color name="call_button_video">#4A90E2</color>
         <color name="call_button_add_call">#FF9F43</color>
