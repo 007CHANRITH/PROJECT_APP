@@ -21,22 +21,35 @@ public class MyPeerConnectionObserver implements PeerConnection.Observer {
 
     @Override
     public void onSignalingChange(PeerConnection.SignalingState signalingState) {
-
+        Log.d("MyPeerObserver", "📡 Signaling state: " + signalingState);
     }
 
     @Override
     public void onIceConnectionChange(PeerConnection.IceConnectionState iceConnectionState) {
+        Log.d("MyPeerObserver", "🧊 ICE connection state: " + iceConnectionState);
+    }
 
+    @Override
+    public void onStandardizedIceConnectionChange(PeerConnection.IceConnectionState iceConnectionState) {
+        Log.d("MyPeerObserver", "🧊 Standardized ICE connection state: " + iceConnectionState);
+    }
+
+    @Override
+    public void onConnectionChange(PeerConnection.PeerConnectionState newState) {
+        Log.d("MyPeerObserver", "🔌 Connection state changed: " + newState);
+        if (callback != null) {
+            callback.onConnectionStateChange(newState);
+        }
     }
 
     @Override
     public void onIceConnectionReceivingChange(boolean b) {
-
+        Log.d("MyPeerObserver", "📥 ICE receiving: " + b);
     }
 
     @Override
     public void onIceGatheringChange(PeerConnection.IceGatheringState iceGatheringState) {
-
+        Log.d("MyPeerObserver", "🧊 ICE gathering state: " + iceGatheringState);
     }
 
     @Override
@@ -78,20 +91,12 @@ public class MyPeerConnectionObserver implements PeerConnection.Observer {
     public void onAddTrack(RtpReceiver rtpReceiver, MediaStream[] mediaStreams) {
         Log.d("MyPeerObserver", "🔥 onAddTrack called! MediaStreams: " + mediaStreams.length);
         Log.d("MyPeerObserver", "   RtpReceiver track: " + (rtpReceiver != null && rtpReceiver.track() != null ? rtpReceiver.track().kind() : "null"));
-        if (callback != null) {
-            // With addTrack API, we need to create a MediaStream and add the track
-            if (rtpReceiver != null && rtpReceiver.track() != null) {
-                // Pass the receiver to callback for proper handling
-                callback.onTrackAdded(rtpReceiver);
-            } else if (mediaStreams.length > 0) {
-                callback.onMediaStreamAdded(mediaStreams[0]);
-            }
+        if (callback != null && rtpReceiver != null && rtpReceiver.track() != null) {
+            callback.onTrackAdded(rtpReceiver);
         }
-    }
-
-    public void onConnectionChange(PeerConnection.PeerConnectionState newState) {
-        if (callback != null) {
-            callback.onConnectionStateChange(newState);
+        // Still call onMediaStreamAdded for backward compatibility
+        if (callback != null && mediaStreams.length > 0) {
+            callback.onMediaStreamAdded(mediaStreams[0]);
         }
     }
 

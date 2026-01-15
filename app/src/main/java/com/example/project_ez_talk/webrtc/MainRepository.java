@@ -64,14 +64,63 @@ public class MainRepository implements WebRTCClient.Listener {
                     super.onAddStream(mediaStream);
                     Log.d("MainRepository", "📺 onAddStream - Adding remote video to view");
                     try{
-                        mediaStream.videoTracks.get(0).addSink(remoteView);
-                        Log.d("MainRepository", "✅ Video track added to remoteView");
+                        if (mediaStream.videoTracks.size() > 0) {
+                            VideoTrack remoteVideoTrack = mediaStream.videoTracks.get(0);
+                            remoteVideoTrack.setEnabled(true);
+                            remoteVideoTrack.addSink(remoteView);
+                            Log.d("MainRepository", "✅ Video track added to remoteView");
+                        }
+                        if (mediaStream.audioTracks.size() > 0) {
+                            mediaStream.audioTracks.get(0).setEnabled(true);
+                            Log.d("MainRepository", "✅ Audio track enabled");
+                        }
                     }catch (Exception e){
                         Log.e("MainRepository", "❌ Error adding remote video", e);
                         e.printStackTrace();
                     }
                     if (repositoryListener!=null){
                         repositoryListener.onRemoteStreamAdded(mediaStream);
+                    }
+                }
+
+                // ✅ Handle onAddTrack for modern WebRTC API
+                @Override
+                public void onAddTrack(RtpReceiver rtpReceiver, MediaStream[] mediaStreams) {
+                    super.onAddTrack(rtpReceiver, mediaStreams);
+                    Log.d("MainRepository", "🔥 onAddTrack called!");
+                    
+                    if (rtpReceiver == null || rtpReceiver.track() == null) {
+                        Log.e("MainRepository", "❌ RtpReceiver or track is null");
+                        return;
+                    }
+                    
+                    try {
+                        String trackKind = rtpReceiver.track().kind();
+                        Log.d("MainRepository", "   Track kind: " + trackKind);
+                        
+                        if ("video".equals(trackKind)) {
+                            VideoTrack remoteVideoTrack = (VideoTrack) rtpReceiver.track();
+                            remoteVideoTrack.setEnabled(true);
+                            
+                            if (remoteView != null) {
+                                remoteVideoTrack.addSink(remoteView);
+                                Log.d("MainRepository", "✅ Remote video track added to view");
+                            } else {
+                                Log.e("MainRepository", "❌ remoteView is null!");
+                            }
+                        } else if ("audio".equals(trackKind)) {
+                            rtpReceiver.track().setEnabled(true);
+                            Log.d("MainRepository", "✅ Remote audio track enabled");
+                        }
+                        
+                        // Also call repository listener if available
+                        if (repositoryListener != null && mediaStreams.length > 0) {
+                            repositoryListener.onRemoteStreamAdded(mediaStreams[0]);
+                        }
+                        
+                    } catch (Exception e) {
+                        Log.e("MainRepository", "❌ Error handling remote track", e);
+                        e.printStackTrace();
                     }
                 }
 
